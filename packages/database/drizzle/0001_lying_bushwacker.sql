@@ -1,2 +1,2 @@
-ALTER TABLE "users" ADD COLUMN "salt" text;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "password" text;
+ALTER TABLE "users" ADD "salt" text;--> statement-breakpoint
+ALTER TABLE "users" ADD "password" text;
