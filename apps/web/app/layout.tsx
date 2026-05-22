@@ -24,10 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    // Added suppressHydrationWarning here
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <GlobalProviders>{children}</GlobalProviders>
       </body>
     </html>
   );
 }
+

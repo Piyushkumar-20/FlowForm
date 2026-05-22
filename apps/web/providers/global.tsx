@@ -17,18 +17,21 @@ const queryClient = new QueryClient({
   },
 });
 
-export const GlobalProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const GlobalProviders: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [createTRPCHttpBatchClientClient()],
     }),
   );
+
   return (
     <QueryClientProvider client={queryClient}>
       <NextThemesProvider
         attribute="class"
-        defaultTheme="light"
-        enableSystem
+        defaultTheme="dark"
+        enableSystem={false}
         disableTransitionOnChange
       >
         <trpc.Provider queryClient={queryClient} client={trpcClient}>
