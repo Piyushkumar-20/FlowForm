@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const envSchema = z.object({
+  JWT_SECRET: z.string().describe('Jwt token'),
   GOOGLE_OAUTH_CLIENT_ID: z.string(),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string(),
   GOOGLE_OAUTH_REDIRECT_URI: z.string(),
