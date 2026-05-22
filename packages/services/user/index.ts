@@ -4,8 +4,9 @@ import {
   generateUserTokenPayload,
   GenerateUserTokenPayloadType,
   SignInUserWithEmailAndPasswordInputType,
-  signInUserWithEmailAndPasswordInput
+  signInUserWithEmailAndPasswordInput,
 } from "./model";
+
 import * as JWT from "jsonwebtoken";
 import { createHmac, randomBytes } from "node:crypto";
 import { db, eq } from "@repo/database";
@@ -27,6 +28,10 @@ class UserService {
     return { token };
   }
 
+  private async generateHash(salt: string, password: string ){
+    return createHmac('sha256', salt).update(password).digest('hex')
+  }
+
   // Create user in the DB
   public async createUserWithEmailAndPassword(payload: CreateUserWithEmailAndPasswordInputType) {
     const { email, fullName, password } =
@@ -37,7 +42,7 @@ class UserService {
 
     // Calculate salt and hash the password
     const salt = randomBytes(16).toString("hex");
-    const hash = createHmac("sha256", salt).update(password).digest("hex");
+    const hash = await this.generateHash(password, salt)
 
     const userInsertResult = await db
       .insert(usersTable)
@@ -56,7 +61,27 @@ class UserService {
   }
 
   public async signInUserWithEmailAndPassword(payload: SignInUserWithEmailAndPasswordInputType) {
-    const {email, password} = await signInUserWithEmailAndPasswordInput.parseAsync(payload)
+    const { email, password } = await signInUserWithEmailAndPasswordInput.parseAsync(payload);
+
+    const existingUser = await this.getUserByEmail(email);
+
+    if (!existingUser) {
+      throw new Error('Invalid Username or Password');
+    }
+
+    if (!existingUser.password || !existingUser.salt) {
+      throw new Error ('Invalid Authentication Method')
+    } 
+    const hash = await this.generateHash(existingUser.salt, password)
+
+    if (existingUser.password !== hash) throw new Error ('Invalid Username or Password')
+  
+    const {token} = await this.generateUserToken ({id: existingUser.id})
+
+    return {
+      id: existingUser.id,
+      token
+    }
   }
 }
 

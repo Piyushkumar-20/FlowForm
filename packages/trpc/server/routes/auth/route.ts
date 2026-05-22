@@ -1,8 +1,7 @@
 import { userService } from "../../services";
 import { publicProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
-import { createUserWithEmailAndPasswordInputModel, createUserWithEmailAndPasswordOutputModel } from "./model";
-
+import { createUserWithEmailAndPasswordInputModel, createUserWithEmailAndPasswordOutputModel, signInUserWithEmailAndPasswordInputModel, signInUserWithEmailAndPasswordOutputModel } from "./model";
 
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");
@@ -18,23 +17,44 @@ export const authRouter: any = router({
     })
     .input(createUserWithEmailAndPasswordInputModel)
     .output(createUserWithEmailAndPasswordOutputModel)
-    .mutation(async ({ input , ctx}) => {
+    .mutation(async ({ input, ctx }) => {
       const { fullName, email, password } = input;
-      const {id, token}= await userService.createUserWithEmailAndPassword({ fullName, email, password });
+      const { id, token } = await userService.createUserWithEmailAndPassword({ fullName, email, password });
 
-    setAuthenticationCookie(ctx, token)
+      setAuthenticationCookie(ctx, token);
       return {
-        id,
-        token
+        id
       };
     }),
+
+  signInUserWithEmailAndPassword: publicProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/signInUserWithEmailAndPassword"),
+        tags: TAGS,
+      },
+    })
+    .input(signInUserWithEmailAndPasswordInputModel)
+    .output(signInUserWithEmailAndPasswordOutputModel)
+    .mutation(async ({ input, ctx }) => { 
+      const { email, password } = input;
+      
+
+      const { id, token } = await userService.signInUserWithEmailAndPassword({ email, password });
+  
+      setAuthenticationCookie(ctx, token);
+      
+      return {
+        id
+      };
+    }), 
 });
+
 function setAuthenticationCookie(ctx: any, token: string) {
-   if (ctx && typeof ctx.createCookie === 'function') {
+  if (ctx && typeof ctx.createCookie === 'function') {
     ctx.createCookie('auth_token', token);
   } else {
     throw new Error("tRPC Context missing 'createCookie' utility.");
   }
 }
-
-
