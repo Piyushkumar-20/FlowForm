@@ -30,6 +30,11 @@ export const authRouter: any = router({
     }),
 });
 function setAuthenticationCookie(ctx: any, token: string) {
-  throw new Error("Function not implemented.");
+   if (ctx && typeof ctx.createCookie === 'function') {
+    ctx.createCookie('auth_token', token);
+  } else {
+    throw new Error("tRPC Context missing 'createCookie' utility.");
+  }
 }
+
 
