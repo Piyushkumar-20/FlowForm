@@ -7,7 +7,7 @@ import { createUserWithEmailAndPasswordInputModel, createUserWithEmailAndPasswor
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");
 
-export const authRouter = router({
+export const authRouter: any = router({
   createUserWithEmailAndPassword: publicProcedure
     .meta({
       openapi: {
@@ -18,12 +18,18 @@ export const authRouter = router({
     })
     .input(createUserWithEmailAndPasswordInputModel)
     .output(createUserWithEmailAndPasswordOutputModel)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input , ctx}) => {
       const { fullName, email, password } = input;
       const {id, token}= await userService.createUserWithEmailAndPassword({ fullName, email, password });
+
+    setAuthenticationCookie(ctx, token)
       return {
         id,
         token
       };
     }),
 });
+function setAuthenticationCookie(ctx: any, token: string) {
+  throw new Error("Function not implemented.");
+}
+

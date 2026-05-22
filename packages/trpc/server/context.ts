@@ -1,7 +1,7 @@
 import type {CreateExpressContextOptions} from '@trpc/server/adapters/express'
 import { clearCookieFactory, createCookieFactory, getCookieFactory } from "./utils/cookie";
 
-interface TRPCContext {
+export interface TRPCContext {
     createCookie: ReturnType <typeof createCookieFactory>;
     getCookie: ReturnType <typeof getCookieFactory>;
     clearCookie: ReturnType <typeof clearCookieFactory>;
