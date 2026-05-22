@@ -148,7 +148,7 @@ export function SignupForm({
                   Create Account
                 </Button>
                 <p className="text-muted-foreground text-center text-sm">
-                  Already have an account? <a href="#">Sign in</a>
+                  Already have an account? <a href="">Sign in</a>
                 </p>
               </div>
             </form>

@@ -1,7 +1,14 @@
-import { initTRPC, TRPCError } from "@trpc/server";
+import { initTRPC, TRPCError, type TRPCDefaultErrorShape } from "@trpc/server";
 import { OpenApiMeta } from "trpc-to-openapi";
 
-import { createContext } from "./context";
+import { createContext, type TRPCContext } from "./context";
+
+export type TRPCRouterRoot = {
+  ctx: TRPCContext;
+  meta: OpenApiMeta;
+  errorShape: TRPCDefaultErrorShape;
+  transformer: false;
+};
 
 export const tRPCContext = initTRPC
   .meta<OpenApiMeta>()
