@@ -1,0 +1,22 @@
+{
+  "extends": "@repo/typescript-config/node.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    "moduleResolution": "node",
+    "module": "CommonJS",
+
+    // Silence deprecated option warnings from extended configs (e.g., node10 -> removed in TS7)
+    "ignoreDeprecations": "6.0",
+
+    // We don't need these for our final build
+    "declarationMap": false,
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": ["src"],
+  "ts-node": {
+    "swc": true
+  }
+}
