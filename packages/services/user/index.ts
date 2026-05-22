@@ -3,6 +3,8 @@ import {
   createUserWithEmailAndPasswordInput,
   generateUserTokenPayload,
   GenerateUserTokenPayloadType,
+  SignInUserWithEmailAndPasswordInputType,
+  signInUserWithEmailAndPasswordInput
 } from "./model";
 import * as JWT from "jsonwebtoken";
 import { createHmac, randomBytes } from "node:crypto";
@@ -51,6 +53,10 @@ class UserService {
       id: userId,
       token,
     };
+  }
+
+  public async signInUserWithEmailAndPassword(payload: SignInUserWithEmailAndPasswordInputType) {
+    const {email, password} = await signInUserWithEmailAndPasswordInput.parseAsync(payload)
   }
 }
 
