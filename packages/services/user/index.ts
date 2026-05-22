@@ -42,7 +42,7 @@ class UserService {
 
     // Calculate salt and hash the password
     const salt = randomBytes(16).toString("hex");
-    const hash = await this.generateHash(password, salt)
+    const hash = await this.generateHash(salt, password)
 
     const userInsertResult = await db
       .insert(usersTable)

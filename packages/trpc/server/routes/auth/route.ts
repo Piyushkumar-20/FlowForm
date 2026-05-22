@@ -2,7 +2,7 @@ import { userService } from "../../services";
 import { publicProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import { createUserWithEmailAndPasswordInputModel, createUserWithEmailAndPasswordOutputModel, signInUserWithEmailAndPasswordInputModel, signInUserWithEmailAndPasswordOutputModel } from "./model";
-
+import { TRPCError } from "@trpc/server";
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");
 
