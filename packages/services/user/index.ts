@@ -14,6 +14,7 @@ import { usersTable } from "@repo/database/models/user";
 import { env } from "../env";
 
 class UserService {
+
   private async getUserByEmail(email: string) {
     const result = await db.select().from(usersTable).where(eq(usersTable.email, email));
     if (!result || result.length === 0) {
@@ -26,6 +27,29 @@ class UserService {
     const { id } = await generateUserTokenPayload.parseAsync(payload);
     const token = JWT.sign({ id }, env.JWT_SECRET);
     return { token };
+  };
+
+  private async verifyUserToken(token: string): Promise <GenerateUserTokenPayloadType> {
+    
+    try{
+      const verificationResult = JWT.verify(token, env.JWT_SECRET) as GenerateUserTokenPayloadType
+      return verificationResult;
+    } catch (error){
+      throw new Error ('Invalid token')
+    }
+  }
+
+  private async getUserDetailById(id: string) {
+    const user = await db.select({
+      id: usersTable.id,
+      email: usersTable.email,
+      fullName: usersTable.fullName,
+      profileImageUrl: usersTable.profileImageUrl
+    }).from(usersTable).where(eq(usersTable.id, id))
+
+    if (!user || user.length === 0) throw new Error ('User does not exist');
+
+    return user[0];
   }
 
   private async generateHash(salt: string, password: string ){
@@ -82,6 +106,12 @@ class UserService {
       id: existingUser.id,
       token
     }
+  }
+
+  public async verifyAndDecodeUserToken (token: string) {
+    const {id} = await this.verifyUserToken(token)
+    const userInfo = await this.getUserDetailById(id)
+    return {...userInfo}
   }
 }
 

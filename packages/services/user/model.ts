@@ -18,4 +18,3 @@ export const signInUserWithEmailAndPasswordInput = z.object({
 })
 
 export type SignInUserWithEmailAndPasswordInputType = z.infer<typeof signInUserWithEmailAndPasswordInput>
-

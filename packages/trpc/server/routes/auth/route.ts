@@ -1,41 +1,22 @@
+import { TRPCError } from "@trpc/server";
 import { userService } from "../../services";
 import type { TRPCContext } from "../../context";
-import {
-  type TRPCBuiltRouter,
-  type TRPCDecorateCreateRouterOptions,
-  type TRPCMutationProcedure,
-} from "@trpc/server";
-import type { OpenApiMeta } from "trpc-to-openapi";
-import type { z } from "zod";
-import { publicProcedure, router, type TRPCRouterRoot } from "../../trpc";
+import { publicProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import {
   createUserWithEmailAndPasswordInputModel,
   createUserWithEmailAndPasswordOutputModel,
   signInUserWithEmailAndPasswordInputModel,
   signInUserWithEmailAndPasswordOutputModel,
+  getLoggedInUserInputModel,
+  getLoggedInUserOutputModel
 } from "./model";
 
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");
 
-type AuthRouterProcedures = {
-  createUserWithEmailAndPassword: TRPCMutationProcedure<{
-    input: z.infer<typeof createUserWithEmailAndPasswordInputModel>;
-    output: z.infer<typeof createUserWithEmailAndPasswordOutputModel>;
-    meta: OpenApiMeta;
-  }>;
-  signInUserWithEmailAndPassword: TRPCMutationProcedure<{
-    input: z.infer<typeof signInUserWithEmailAndPasswordInputModel>;
-    output: z.infer<typeof signInUserWithEmailAndPasswordOutputModel>;
-    meta: OpenApiMeta;
-  }>;
-};
 
-export const authRouter: TRPCBuiltRouter<
-  TRPCRouterRoot,
-  TRPCDecorateCreateRouterOptions<AuthRouterProcedures>
-> = router({
+export const authRouter = router({
   createUserWithEmailAndPassword: publicProcedure
     .meta({
       openapi: {
@@ -78,6 +59,25 @@ export const authRouter: TRPCBuiltRouter<
         id
       };
     }), 
+
+    getLoggedInUser: publicProcedure.meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/getLoggedInUser"),
+        tags: TAGS
+      },
+    })
+    .input(getLoggedInUserInputModel)
+    .output(getLoggedInUserOutputModel)
+    .query(async ({ ctx }) => {
+      const userToken = getAuthenticationCookie(ctx);
+      if (!userToken) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "User not logged in" });
+      }
+
+      const user = await userService.verifyAndDecodeUserToken(userToken);
+      return getLoggedInUserOutputModel.parse(user);
+    })
 });
 
 function setAuthenticationCookie(ctx: TRPCContext, token: string) {
@@ -86,4 +86,8 @@ function setAuthenticationCookie(ctx: TRPCContext, token: string) {
   } else {
     throw new Error("tRPC Context missing 'createCookie' utility.");
   }
+}
+
+function getAuthenticationCookie(ctx: TRPCContext) {
+  return ctx.getCookie("auth_token");
 }
