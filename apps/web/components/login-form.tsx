@@ -1,7 +1,7 @@
 "use client"
 
 import { SubmitHandler, useForm } from "react-hook-form"
-
+import {useRouter} from 'next/navigation'
 import { cn } from "~/lib/utils"
 import { Button } from "~/components/ui/button"
 import {
@@ -31,6 +31,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const { signInUserWithEmailAndPasswordAsync } = useSignin();
+  const router = useRouter()
   const form = useForm<LoginFormValues>({
     defaultValues: {
       email: "",
@@ -43,6 +44,7 @@ export function LoginForm({
       email: values.email,
       password: values.password
     })
+    router.replace('/dashboard')
   }
 
   return (
