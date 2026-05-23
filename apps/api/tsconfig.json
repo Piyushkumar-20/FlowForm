@@ -8,7 +8,7 @@
     "module": "CommonJS",
 
     // Silence deprecated option warnings from extended configs (e.g., node10 -> removed in TS7)
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
 
     // We don't need these for our final build
     "declarationMap": false,

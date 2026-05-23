@@ -75,12 +75,12 @@ export const authRouter = router({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "User not logged in" });
       }
 
-      const {id, email, fullName, profileImageUrl} = await userService.verifyAndDecodeUserToken(userToken)
-      return {
-        id,
-        email,
-        fullName,
-        profileImageUrl
+      try {
+        const { id, email, fullName, profileImageUrl } =
+          await userService.verifyAndDecodeUserToken(userToken);
+        return { id, email, fullName, profileImageUrl };
+      } catch {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired token" });
       }
     })
 });
@@ -94,12 +94,12 @@ function setAuthenticationCookie(ctx: TRPCContext, token: string) {
 }
 
 function getAuthenticationCookie(ctx: TRPCContext) {
+  const authorization = ctx.req?.headers?.authorization;
+  const cookieToken = ctx.getCookie("auth_token");
 
-  const authHeader = ctx.req?.headers?.["authorization"] || ctx.getCookie("auth_token");
-  
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    return authHeader.split(" ")[1];
+  if (typeof authorization === "string" && authorization.startsWith("Bearer ")) {
+    return authorization.slice("Bearer ".length).trim() || undefined;
   }
-  
-  return authHeader;
+
+  return cookieToken;
 }
