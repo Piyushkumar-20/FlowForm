@@ -5,6 +5,7 @@ import {
   GenerateUserTokenPayloadType,
   SignInUserWithEmailAndPasswordInputType,
   signInUserWithEmailAndPasswordInput,
+  VerifyAndDecodeUserTokenOutputType
 } from "./model";
 
 import * as JWT from "jsonwebtoken";
@@ -40,16 +41,16 @@ class UserService {
   }
 
   private async getUserDetailById(id: string) {
-    const user = await db.select({
+    const [userRecord] = await db.select({
       id: usersTable.id,
       email: usersTable.email,
       fullName: usersTable.fullName,
       profileImageUrl: usersTable.profileImageUrl
-    }).from(usersTable).where(eq(usersTable.id, id))
+    }).from(usersTable).where(eq(usersTable.id, id));
 
-    if (!user || user.length === 0) throw new Error ('User does not exist');
+    if (!userRecord) throw new Error('User does not exist');
 
-    return user[0];
+    return userRecord;
   }
 
   private async generateHash(salt: string, password: string ){
@@ -108,10 +109,15 @@ class UserService {
     }
   }
 
-  public async verifyAndDecodeUserToken (token: string) {
-    const {id} = await this.verifyUserToken(token)
-    const userInfo = await this.getUserDetailById(id)
-    return {...userInfo}
+  public async verifyAndDecodeUserToken(token: string): Promise<VerifyAndDecodeUserTokenOutputType> {
+    const { id } = await this.verifyUserToken(token);
+    const userInfo = await this.getUserDetailById(id);
+    return {
+      id: userInfo.id,
+      email: userInfo.email,
+      fullName: userInfo.fullName,
+      profileImageUrl: userInfo.profileImageUrl,
+    };
   }
 }
 

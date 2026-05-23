@@ -18,3 +18,13 @@ export const signInUserWithEmailAndPasswordInput = z.object({
 })
 
 export type SignInUserWithEmailAndPasswordInputType = z.infer<typeof signInUserWithEmailAndPasswordInput>
+
+export const verifyAndDecodeUserTokenOutput = z.object({
+    id: z.string(),
+    email: z.string().email(),
+    fullName: z.string(),
+    profileImageUrl: z.string().nullable()
+  })
+  
+  export type VerifyAndDecodeUserTokenOutputType =
+    z.infer<typeof verifyAndDecodeUserTokenOutput>

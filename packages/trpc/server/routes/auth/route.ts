@@ -62,7 +62,7 @@ export const authRouter = router({
 
     getLoggedInUser: publicProcedure.meta({
       openapi: {
-        method: "GET",
+        method: "POST",
         path: getPath("/getLoggedInUser"),
         tags: TAGS
       },
@@ -75,8 +75,13 @@ export const authRouter = router({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "User not logged in" });
       }
 
-      const user = await userService.verifyAndDecodeUserToken(userToken);
-      return getLoggedInUserOutputModel.parse(user);
+      const {id, email, fullName, profileImageUrl} = await userService.verifyAndDecodeUserToken(userToken)
+      return {
+        id,
+        email,
+        fullName,
+        profileImageUrl
+      }
     })
 });
 
@@ -89,5 +94,12 @@ function setAuthenticationCookie(ctx: TRPCContext, token: string) {
 }
 
 function getAuthenticationCookie(ctx: TRPCContext) {
-  return ctx.getCookie("auth_token");
+
+  const authHeader = ctx.req?.headers?.["authorization"] || ctx.getCookie("auth_token");
+  
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1];
+  }
+  
+  return authHeader;
 }
