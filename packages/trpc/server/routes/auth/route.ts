@@ -66,7 +66,8 @@ export const authRouter = router({
       openapi: {
         method: "POST",
         path: getPath("/getLoggedInUser"),
-        tags: TAGS
+        tags: TAGS,
+        protect: true
       },
     })
     .input(getLoggedInUserInputModel)
