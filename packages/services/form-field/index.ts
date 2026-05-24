@@ -99,11 +99,7 @@ class FormFieldService {
       .select()
       .from(formFieldTable)
       .where(eq(formFieldTable.formId, formId));
-  
-    if (result.length === 0) {
-      throw new Error(`No fields found for form ID ${formId}`);
-    }
-  
+
     return result;
   }
 }

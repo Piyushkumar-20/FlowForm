@@ -71,7 +71,7 @@ export function FormsListTable() {
                     {form.title ?? "Untitled form"}
                   </Link>
                 </TableCell>
-                <TableCell className="max-w-[28rem] whitespace-normal text-muted-foreground">
+                <TableCell className="max-w-md whitespace-normal text-muted-foreground">
                   {form.description ?? "—"}
                 </TableCell>
                 <TableCell>{formatDate(form.createdAt)}</TableCell>
