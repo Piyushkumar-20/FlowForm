@@ -1,5 +1,5 @@
-import { CreateFormInputType, createFormInput, CreateFormOutputType } from "./model";
-import { db } from "@repo/database";
+import { CreateFormInputType, createFormInput, CreateFormOutputType , listFormsByUserIdIntput, ListFormsByUserIdIntputType} from "./model";
+import { db, eq} from "@repo/database";
 import { formsTable } from "@repo/database/models/form";
 
 class FormService {
@@ -20,6 +20,21 @@ class FormService {
        createdAt: result[0].createdAt ? result[0].createdAt.toISOString() : new Date().toISOString(),
     };
   }
+
+  public async listUserForm(payload: ListFormsByUserIdIntputType) {
+    const {userId} = await listFormsByUserIdIntput.parseAsync(payload);
+
+    const forms = await db.select({
+      id: formsTable.id,
+      title: formsTable.title,
+      description: formsTable.description,
+      createdAt: formsTable.createdAt,
+      createdBy: formsTable.createdBy
+    }).from(formsTable).where(eq(formsTable.createdBy, userId))
+
+    return forms
+  }
+
 }
 
 export default FormService;
