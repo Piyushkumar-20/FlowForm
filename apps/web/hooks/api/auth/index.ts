@@ -53,7 +53,9 @@ export const useSignin = () => {
 };
 
 export const useUser = () => {
-  const {data: user, isFetched, isFetching, error, isLoading, status} = trpc.auth.getLoggedInUser.useQuery()
+  const {data: user, isFetched, isFetching, error, isLoading, status} = trpc.auth.getLoggedInUser.useQuery(undefined, {
+    retry: false,
+  })
 
   return {
     user,

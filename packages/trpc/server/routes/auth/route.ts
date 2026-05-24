@@ -11,7 +11,7 @@ import {
   getLoggedInUserInputModel,
   getLoggedInUserOutputModel
 } from "./model";
-import {getAuthenticationCookie} from "../../utils/cookie"
+import { getAuthenticationCookie } from "../../utils/cookie"
 
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");

@@ -10,7 +10,7 @@ const ONE_YEAR = 365 * ONE_DAY;
 const defaultCookieOptions : CookieOptions = {
   path: "/",
   httpOnly: true,
-  secure: false,
+  secure: process.env.NODE_ENV === "production",
   sameSite: "strict",
   maxAge: ONE_YEAR,
 };
@@ -38,9 +38,9 @@ export function clearCookieFactory(req: Request) {
 }
 
 // Authenticaton Cookie 
-const AUTHENTICATION_COOKIE_NAME = 'authentication_token'
+const AUTHENTICATION_COOKIE_NAME = 'auth_token'
 
-export function setAuthenticationoCookie (ctx: TRPCContext, accessToken: string) {
+export function setAuthenticationCookie (ctx: TRPCContext, accessToken: string) {
     return ctx.createCookie(AUTHENTICATION_COOKIE_NAME, accessToken)
 }
 export function getAuthenticationCookie (ctx: TRPCContext) {

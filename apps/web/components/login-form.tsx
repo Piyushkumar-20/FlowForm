@@ -20,6 +20,7 @@ import {
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
 import { useSignin } from "~/hooks/api/auth"
+import { toast } from "sonner"
 
 export type LoginFormValues = {
   email: string
@@ -40,11 +41,16 @@ export function LoginForm({
   })
 
   const onSubmit: SubmitHandler<LoginFormValues> = async(values) => {
-    await signInUserWithEmailAndPasswordAsync({
-      email: values.email,
-      password: values.password
-    })
-    router.replace('/dashboard')
+    try {
+      await signInUserWithEmailAndPasswordAsync({
+        email: values.email,
+        password: values.password
+      })
+      router.replace('/dashboard')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Login failed"
+      toast.error(message)
+    }
   }
 
   return (
