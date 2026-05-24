@@ -24,10 +24,10 @@ export const updateFieldInput = z.object({
 export type UpdateFieldInputType = z.infer<typeof updateFieldInput>
 
 
-export const getFieldInput = z.object({
-    fieldId: z.string().uuid().describe('UUId of field to get'),
+export const getFieldsInput = z.object({
+    formId: z.string().uuid().describe('UUId of field to get'),
 })
-export type GetFieldInputType = z.infer<typeof getFieldInput>
+export type GetFieldsInputType = z.infer<typeof getFieldsInput>
 
 export const deleteFieldInput = z.object({
     fieldId: z.string().uuid().describe('UUId of field to delete'),

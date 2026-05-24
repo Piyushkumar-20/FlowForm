@@ -1,8 +1,18 @@
 import { publicProcedure, router, authenticateProcedure } from "../../trpc";
-import { formService } from "../../services";
-import { createFormInputModel, createFormOutputModel, listFormsOutputModel} from "./model";
+import { formService, formFieldService } from "../../services";
+import {
+  createFormInputModel,
+  createFormOutputModel,
+  createFieldInputModel,
+  createFieldOutputModel,
+  updateFieldInputModel,
+  updateFieldOutputModel,
+  getFieldsinputModel,
+  getFieldsOutputModel,
+  listFormsOutputModel,
+} from "./model";
 import { generatePath } from "../../utils/path-generator";
-import {z} from 'zod'
+import { z } from "zod";
 
 const TAGS = ["Form"];
 const getPath = generatePath("/form");
@@ -31,20 +41,72 @@ export const formRouter = router({
       return { id, createdAt };
     }),
 
-    listForms: authenticateProcedure
-      .meta({
+  listForms: authenticateProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/listForms"),
+        tags: TAGS,
+        protect: true,
+      },
+    })
+    .input(z.undefined())
+    .output(listFormsOutputModel)
+    .query(async ({ ctx }) => {
+      const forms = await formService.listFormsByUserId({ userId: ctx.user.id });
+
+      return forms;
+    }),
+
+  createField: authenticateProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/createField"),
+        tags: TAGS,
+        protect: true,
+      },
+    })
+    .input(createFieldInputModel)
+    .output(createFieldOutputModel)
+    .mutation(async ({ input }) => {
+      return formFieldService.createField(input);
+    }),
+  
+    updateField: authenticateProcedure
+      .meta({ 
         openapi: {
           method: "POST",
-          path: getPath("/listForms"),
+          path: getPath("/updateField"),
           tags: TAGS,
-          protect: true
-        }
+          protect: true,
+        },
       })
-      .input(z.undefined())
-      .output(listFormsOutputModel)
-      .query(async ({ctx}) => {
-        const forms = await formService.listFormsByUserId({userId: ctx.user.id})
-        
-        return forms
+      .input(updateFieldInputModel)
+      .output(updateFieldOutputModel)
+      .mutation(async ({ input }) => {
+        return {
+          id: "fieldId",
+          label: input.label ?? "field-label",
+          type: input.type ?? "TEXT",
+          description: input.description,
+          placeholder: input.placeholder,
+          isRequired: input.isRequired ?? false,
+        };
+      }),
+
+      getFields: authenticateProcedure
+      .meta({ 
+        openapi: {
+          method: "GET", 
+          path: getPath("/getFields"),
+          tags: TAGS,
+          protect: true,
+        },
       })
+      .input(getFieldsinputModel) 
+      .output(getFieldsOutputModel)
+      .query(async ({ input }) => {
+        return formFieldService.getFields({ formId: input.formId }); 
+      })  
 });

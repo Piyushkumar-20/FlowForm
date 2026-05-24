@@ -6,8 +6,8 @@ import {
   createFieldInput,
   type UpdateFieldInputType,
   updateFieldInput,
-  type GetFieldInputType,
-  getFieldInput,
+  type GetFieldsInputType,
+  getFieldsInput,
   type DeleteFieldInputType,
   deleteFieldInput,
 } from "./model";
@@ -25,7 +25,7 @@ class FormFieldService {
     const result = await db
       .select({ maxIndex: max(formFieldTable.index) })
       .from(formFieldTable)
-      .where(eq(formFieldTable, formId));
+      .where(eq(formFieldTable.formId, formId));
 
     const current = result[0]?.maxIndex;
     const next = current ? parseFloat(current) + 1 : 1;
@@ -44,10 +44,17 @@ class FormFieldService {
       .values({ label, labelKey, index, type, description, placeholder, isRequired })
       .returning({ id: formFieldTable.id });
 
-    if (!result || result.length === 0 || result[0]?.id) {
-      throw new Error("Something Went Wrong");
-    }
-    return { id: formFieldTable.id, labelKey, index };
+      if (!result || result.length === 0 || !result[0]?.id) { 
+        throw new Error("Something Went Wrong");
+      }
+      return {
+        id: result[0].id,
+        label,
+        type,
+        description,
+        placeholder,
+        isRequired,
+      };; 
   }
 
   public async updateField(payload: UpdateFieldInputType) {
@@ -76,7 +83,7 @@ class FormFieldService {
 
     const result = await db
       .delete(formFieldTable)
-      .where(eq(formFieldTable, fieldId))
+      .where(eq(formFieldTable.id, fieldId))
       .returning({ id: formFieldTable.id });
 
     if (!result || result.length === 0)
@@ -85,15 +92,19 @@ class FormFieldService {
     return { id: result[0]!.id };
   }
 
-  public async getField(payload: GetFieldInputType) {
-    const { fieldId } = await getFieldInput.parseAsync(payload);
-
-    const result = await db.select().from(formFieldTable).where(eq(formFieldTable.id, fieldId));
-
-    if (!result || result.length === 0)
-      throw new Error(`Field With ID ${fieldId} does not exist`);
-
-    return result[0]!;
+  public async getFields(payload: GetFieldsInputType) {
+    const { formId } = await getFieldsInput.parseAsync(payload);
+  
+    const result = await db
+      .select()
+      .from(formFieldTable)
+      .where(eq(formFieldTable.formId, formId));
+  
+    if (result.length === 0) {
+      throw new Error(`No fields found for form ID ${formId}`);
+    }
+  
+    return result;
   }
 }
 
