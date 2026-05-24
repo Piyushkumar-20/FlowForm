@@ -22,6 +22,13 @@
       "when": 1779605704335,
       "tag": "0002_strange_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779608324507,
+      "tag": "0003_flippant_triton",
+      "breakpoints": true
     }
   ]
 }

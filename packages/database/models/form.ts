@@ -9,7 +9,7 @@ import {
   } from "drizzle-orm/pg-core";
   import { usersTable } from "./user";
 
-  export const forms = pgTable("forms" , {
+  export const formsTable = pgTable("forms" , {
     id: uuid("id").primaryKey().defaultRandom(),
 
     title: varchar('title', { length: 20}).notNull(),
@@ -20,7 +20,7 @@ import {
     updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
   });
 
-  export type SelectForm = typeof forms.$inferSelect
-  export type InsertForm = typeof forms.$inferInsert
+  export type SelectForm = typeof formsTable.$inferSelect
+  export type InsertForm = typeof formsTable.$inferInsert
 
   
