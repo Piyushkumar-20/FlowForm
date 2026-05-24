@@ -43,7 +43,7 @@ const AUTHENTICATION_COOKIE_NAME = 'authentication_token'
 export function setAuthenticationoCookie (ctx: TRPCContext, accessToken: string) {
     return ctx.createCookie(AUTHENTICATION_COOKIE_NAME, accessToken)
 }
-export function getAuthenticationoCookie (ctx: TRPCContext) {
+export function getAuthenticationCookie (ctx: TRPCContext) {
     return ctx.getCookie(AUTHENTICATION_COOKIE_NAME)
 }
 export function clearAuthenticationoCookie (ctx: TRPCContext) {

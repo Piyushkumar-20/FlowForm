@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { userService } from "../../services";
 import type { TRPCContext } from "../../context";
-import { publicProcedure, router } from "../../trpc";
+import { authenticateProcedure, publicProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import {
   createUserWithEmailAndPasswordInputModel,
@@ -11,6 +11,7 @@ import {
   getLoggedInUserInputModel,
   getLoggedInUserOutputModel
 } from "./model";
+import {getAuthenticationCookie} from "../../utils/cookie"
 
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");
@@ -60,7 +61,7 @@ export const authRouter = router({
       };
     }), 
 
-    getLoggedInUser: publicProcedure.meta({
+    getLoggedInUser: authenticateProcedure.meta({
       openapi: {
         method: "POST",
         path: getPath("/getLoggedInUser"),
@@ -93,13 +94,4 @@ function setAuthenticationCookie(ctx: TRPCContext, token: string) {
   }
 }
 
-function getAuthenticationCookie(ctx: TRPCContext) {
-  const authorization = ctx.req?.headers?.authorization;
-  const cookieToken = ctx.getCookie("auth_token");
 
-  if (typeof authorization === "string" && authorization.startsWith("Bearer ")) {
-    return authorization.slice("Bearer ".length).trim() || undefined;
-  }
-
-  return cookieToken;
-}
