@@ -1,4 +1,4 @@
-import { CreateFormInputType, createFormInput, CreateFormOutputType , listFormsByUserIdIntput, ListFormsByUserIdIntputType} from "./model";
+import { CreateFormInputType, createFormInput, CreateFormOutputType , listFormsByUserIdInput, ListFormsByUserIdInputType} from "./model";
 import { db, eq} from "@repo/database";
 import { formsTable } from "@repo/database/models/form";
 
@@ -21,8 +21,8 @@ class FormService {
     };
   }
 
-  public async listUserForm(payload: ListFormsByUserIdIntputType) {
-    const {userId} = await listFormsByUserIdIntput.parseAsync(payload);
+  public async listFormsByUserId(payload: ListFormsByUserIdInputType) {
+    const {userId} = await listFormsByUserIdInput.parseAsync(payload);
 
     const forms = await db.select({
       id: formsTable.id,
