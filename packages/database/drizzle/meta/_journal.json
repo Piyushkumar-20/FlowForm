@@ -15,6 +15,13 @@
       "when": 1779439093598,
       "tag": "0001_lying_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779605704335,
+      "tag": "0002_strange_rhodey",
+      "breakpoints": true
     }
   ]
 }
