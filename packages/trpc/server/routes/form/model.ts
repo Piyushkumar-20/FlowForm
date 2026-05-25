@@ -120,6 +120,23 @@ export const getFieldInputModel = z.object({
 
 export const getFieldOutputModel = z.array(formFieldObject);
 
+/* SUBMIT FORM */
+
+export const submitFormInputModel = z.object({
+  formId: z.string().uuid().describe("UUID of the form"),
+  values: z.array(
+    z.object({
+      formFieldId: z.string().uuid().describe("UUID of the form field"),
+      value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+    }),
+  ),
+});
+
+export const submitFormOutputModel = z.object({
+  id: z.string().uuid().describe("Submission ID"),
+  createdAt: z.date().describe("Submission timestamp"),
+});
+
 /* GET FORM BY ID*/
 
 export const getFormByIdInputModel= z.object({
