@@ -34,7 +34,7 @@ class FormFieldService {
   }
 
   public async createField(payload: CreateFieldInputType) {
-    const { label, type, formId, description, placeholder, isRequired } =
+    const { label, type, formId, description, placeholder, isRequired, options } =
       await createFieldInput.parseAsync(payload);
 
     const labelKey = toLabelKey(label);
@@ -42,12 +42,23 @@ class FormFieldService {
 
     const result = await db
       .insert(formFieldTable)
-      .values({ label, labelKey, index, type, description, placeholder, isRequired, formId })
+      .values({
+        label,
+        labelKey,
+        index,
+        type,
+        description,
+        placeholder,
+        isRequired,
+        formId,
+        options: options ?? null,
+      })
       .returning({ id: formFieldTable.id });
 
     if (!result || result.length === 0 || !result[0]?.id) {
-      throw new Error("Something Went Wrong");
+      throw new Error("Something went wrong creating field");
     }
+
     return {
       id: result[0].id,
       label,
@@ -55,6 +66,7 @@ class FormFieldService {
       description,
       placeholder,
       isRequired,
+      options: options ?? null,
     };
   }
 
@@ -70,8 +82,9 @@ class FormFieldService {
     if ("description" in updates) patch.description = updates.description ?? null;
     if ("placeholder" in updates) patch.placeholder = updates.placeholder ?? null;
     if (updates.isRequired !== undefined) patch.isRequired = updates.isRequired;
+    if ("options" in updates) patch.options = updates.options ?? null;
 
-    if (Object.keys(patch).length === 0) throw new Error("No field Provided");
+    if (Object.keys(patch).length === 0) throw new Error("No fields provided to update");
 
     const result = await db
       .update(formFieldTable)
@@ -84,8 +97,10 @@ class FormFieldService {
         description: formFieldTable.description,
         placeholder: formFieldTable.placeholder,
         isRequired: formFieldTable.isRequired,
+        options: formFieldTable.options,
       });
-    if (!result || result.length === 0) throw new Error(`Field With ID ${fieldId} does not exist`);
+
+    if (!result || result.length === 0) throw new Error(`Field with ID ${fieldId} does not exist`);
     return result[0]!;
   }
 
@@ -97,7 +112,7 @@ class FormFieldService {
       .where(eq(formFieldTable.id, fieldId))
       .returning({ id: formFieldTable.id });
 
-    if (!result || result.length === 0) throw new Error(`Field With ID ${fieldId} does not exist`);
+    if (!result || result.length === 0) throw new Error(`Field with ID ${fieldId} does not exist`);
 
     return { id: result[0]!.id };
   }
@@ -105,9 +120,7 @@ class FormFieldService {
   public async getFields(payload: GetFieldsInputType) {
     const { formId } = await getFieldsInput.parseAsync(payload);
 
-    const result = await db.select().from(formFieldTable).where(eq(formFieldTable.formId, formId));
-
-    return result;
+    return db.select().from(formFieldTable).where(eq(formFieldTable.formId, formId));
   }
 }
 

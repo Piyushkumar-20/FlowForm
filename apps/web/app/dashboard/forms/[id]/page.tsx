@@ -26,7 +26,9 @@ import {
 } from "~/components/ui/select";
 import { type Field, useDeleteField, useGetFields, useUpdateField } from "~/hooks/api/form";
 
-const fieldTypes = ["TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD"] as const;
+const fieldTypes = [
+  "TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD", "SELECT", "CHECKBOX", "RATING", "DATE",
+] as const;
 
 function formatFieldType(type: string) {
   return type

@@ -1,106 +1,78 @@
 import { z } from "zod";
 
-/* COMMON FIELD SCHEMA*/
+/* ENUMS */
+
+export const formFieldEnum = z.enum([
+  "TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD", "SELECT", "CHECKBOX", "RATING", "DATE",
+]);
+
+export const formStatusEnum = z.enum(["draft", "published", "unpublished"]);
+export const formVisibilityEnum = z.enum(["public", "unlisted"]);
+
+/* COMMON FIELD SCHEMA */
 
 export const formFieldObject = z.object({
   id: z.string().uuid().describe("Field unique ID"),
   label: z.string().describe("Label of the form field"),
-  type: z.enum(["TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD"]),
+  type: formFieldEnum,
   description: z.string().nullable().optional().describe("Helper text for the field"),
   placeholder: z.string().nullable().optional().describe("Placeholder for the field"),
   isRequired: z.boolean().default(false).describe("Whether the field is required"),
   index: z.string().optional().describe("Ordering index of the field"),
+  options: z.array(z.string()).nullable().optional().describe("Options for SELECT/CHECKBOX fields"),
 });
 
-/* CREATE FORM*/
+/* CREATE FORM */
 
 export const createFormInputModel = z.object({
   title: z.string().min(1).max(20).describe("Title of the form"),
-
   description: z.string().max(300).optional().describe("Optional description"),
 });
 
 export const createFormOutputModel = z.object({
-  id: z.string().uuid().describe("Created form id"),
-
+  id: z.string().uuid().describe("Created form ID"),
   createdAt: z.string().describe("Creation timestamp (ISO string)"),
 });
 
-/* LIST FORMS */
+/* UPDATE FORM */
 
-export const listFormsOutputModel = z.array(
-  z.object({
-    id: z.string().uuid().describe("Form unique ID"),
-
-    title: z.string().nullable().optional().describe("Title of the form"),
-
-    description: z.string().nullable().describe("Form description"),
-
-    createdAt: z.date().nullable().describe("Creation timestamp"),
-
-    updatedAt: z.date().nullable().optional().describe("Last update timestamp"),
-  }),
-);
-
-/*  FIELD ENUM */
-
-export const formFieldEnum = z.enum(["TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD"]);
-
-/*CREATE FIELD*/
-
-export const createFieldInputModel = z.object({
-  formId: z.string().uuid().describe("Form id"),
-
-  label: z.string().max(100).describe("Label of the form field"),
-
-  type: formFieldEnum.describe("Field type enum"),
-
-  description: z.string().optional().describe("Helper text for the field"),
-
-  placeholder: z.string().optional().describe("Placeholder for the field"),
-
-  isRequired: z.boolean().default(false).describe("Whether the field is mandatory"),
+export const updateFormInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID"),
+  title: z.string().min(1).max(20).optional().describe("Updated title"),
+  description: z.string().max(300).optional().describe("Updated description"),
+  visibility: formVisibilityEnum.optional().describe("Updated visibility"),
 });
 
-export const createFieldOutputModel = formFieldObject;
-
-/*UPDATE FIELD*/
-
-export const updateFieldInputModel = z.object({
-  fieldId: z.string().uuid().describe("Field ID"),
-
-  label: z.string().max(100).optional().describe("Updated label"),
-
-  type: formFieldEnum.optional().describe("Updated field type"),
-
-  description: z.string().optional().describe("Updated helper text"),
-
-  placeholder: z.string().optional().describe("Updated placeholder"),
-
-  isRequired: z.boolean().optional().describe("Whether field is mandatory"),
+export const updateFormOutputModel = z.object({
+  id: z.string().uuid(),
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  status: formStatusEnum,
+  visibility: formVisibilityEnum,
+  updatedAt: z.date().nullable().optional(),
 });
 
-export const updateFieldOutputModel = formFieldObject;
+/* PUBLISH / UNPUBLISH */
 
-/* DELETE FIELD */
-
-export const deleteFieldInputModel = z.object({
-  fieldId: z.string().uuid().describe("Field ID"),
-});
-
-export const deleteFieldOutputModel = z.object({
-  id: z.string().uuid().describe("Deleted field id"),
-});
-
-/* GET FIELDS*/
-
-export const getFieldsInputModel = z.object({
+export const publishFormInputModel = z.object({
   formId: z.string().uuid().describe("Form ID"),
 });
 
-export const getFieldsOutputModel = z.array(formFieldObject);
+export const publishFormOutputModel = z.object({
+  id: z.string().uuid(),
+  status: formStatusEnum,
+});
 
-/* DELETE FORM*/
+export const unpublishFormInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID"),
+});
+
+export const unpublishFormOutputModel = z.object({
+  id: z.string().uuid(),
+  status: formStatusEnum,
+});
+
+/* DELETE FORM */
 
 export const deleteFormInputModel = z.object({
   formId: z.string().uuid().describe("Form ID"),
@@ -108,17 +80,109 @@ export const deleteFormInputModel = z.object({
 
 export const deleteFormOutputModel = z.object({
   success: z.boolean().describe("Whether deletion succeeded"),
-
-  message: z.string().describe("Deletion result message"),
+  message: z.string().describe("Result message"),
 });
 
-/* GET FIELD */
+/* LIST FORMS */
 
-export const getFieldInputModel = z.object({
-  formId: z.string().uuid().describe("UUID of the form"),
+export const listFormsOutputModel = z.array(
+  z.object({
+    id: z.string().uuid().describe("Form unique ID"),
+    title: z.string().nullable().optional().describe("Title of the form"),
+    description: z.string().nullable().describe("Form description"),
+    status: formStatusEnum.describe("Form publish status"),
+    visibility: formVisibilityEnum.describe("Form visibility mode"),
+    createdAt: z.date().nullable().describe("Creation timestamp"),
+    updatedAt: z.date().nullable().optional().describe("Last update timestamp"),
+  }),
+);
+
+/* GET PUBLIC FORMS (explore page) */
+
+export const getPublicFormsOutputModel = z.array(
+  z.object({
+    id: z.string().uuid(),
+    title: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    createdAt: z.date().nullable(),
+    updatedAt: z.date().nullable().optional(),
+  }),
+);
+
+/* GET FORM FOR DASHBOARD (authenticated) */
+
+export const getFormForDashboardInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID"),
 });
 
-export const getFieldOutputModel = z.array(formFieldObject);
+export const getFormForDashboardOutputModel = z.object({
+  id: z.string().uuid(),
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  status: formStatusEnum,
+  visibility: formVisibilityEnum,
+  createdAt: z.date().nullable(),
+  updatedAt: z.date().nullable().optional(),
+});
+
+/* GET FORM BY ID (public) */
+
+export const getFormByIdInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID"),
+});
+
+export const getFormByIdOutputModel = z
+  .object({
+    id: z.string().uuid(),
+    title: z.string().nullable().optional(),
+    description: z.string().nullable(),
+    status: formStatusEnum,
+    visibility: formVisibilityEnum,
+    createdAt: z.date().nullable(),
+    updatedAt: z.date().nullable().optional(),
+    fields: z.array(formFieldObject),
+  })
+  .nullable();
+
+/* FIELD CRUD */
+
+export const createFieldInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID"),
+  label: z.string().max(100).describe("Label of the form field"),
+  type: formFieldEnum.describe("Field type"),
+  description: z.string().optional().describe("Helper text for the field"),
+  placeholder: z.string().optional().describe("Placeholder for the field"),
+  isRequired: z.boolean().default(false).describe("Whether the field is mandatory"),
+  options: z.array(z.string()).optional().describe("Options for SELECT/CHECKBOX fields"),
+});
+
+export const createFieldOutputModel = formFieldObject;
+
+export const updateFieldInputModel = z.object({
+  fieldId: z.string().uuid().describe("Field ID"),
+  label: z.string().max(100).optional().describe("Updated label"),
+  type: formFieldEnum.optional().describe("Updated field type"),
+  description: z.string().optional().describe("Updated helper text"),
+  placeholder: z.string().optional().describe("Updated placeholder"),
+  isRequired: z.boolean().optional().describe("Whether field is mandatory"),
+  options: z.array(z.string()).optional().describe("Options for SELECT/CHECKBOX fields"),
+});
+
+export const updateFieldOutputModel = formFieldObject;
+
+export const deleteFieldInputModel = z.object({
+  fieldId: z.string().uuid().describe("Field ID"),
+});
+
+export const deleteFieldOutputModel = z.object({
+  id: z.string().uuid().describe("Deleted field ID"),
+});
+
+export const getFieldsInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID"),
+});
+
+export const getFieldsOutputModel = z.array(formFieldObject);
 
 /* SUBMIT FORM */
 
@@ -156,24 +220,6 @@ export const getFormSubmissionsOutputModel = z.array(
   }),
 );
 
-/* GET FORM BY ID*/
-
-export const getFormByIdInputModel= z.object({
-  formId: z.string().uuid().describe("Form ID"),
-});
-
-export const getFormByIdOutputModel = z
-  .object({
-    id: z.string().uuid().describe("Form unique ID"),
-
-    title: z.string().nullable().optional().describe("Title of the form"),
-
-    description: z.string().nullable().describe("Form description"),
-
-    createdAt: z.date().nullable().describe("Creation timestamp"),
-
-    updatedAt: z.date().nullable().optional().describe("Last update timestamp"),
-
-    fields: z.array(formFieldObject),
-  })
-  .nullable();
+/* Legacy aliases kept for backward compat */
+export const getFieldInputModel = getFieldsInputModel;
+export const getFieldOutputModel = getFieldsOutputModel;

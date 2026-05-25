@@ -1,6 +1,7 @@
 import express from "express";
 import { logger } from "@repo/logger";
 import cors from "cors";
+import { rateLimit } from "express-rate-limit";
 
 import cookieParser from "cookie-parser";
 import * as trpcExpress from "@trpc/server/adapters/express";
@@ -28,6 +29,26 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 
 app.use(cookieParser());
 app.use(express.json());
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+
+const submitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many submissions from this IP, please try again later." },
+});
+
+app.use("/api", generalLimiter);
+app.use("/api/form/submitForm", submitLimiter);
+app.use("/trpc/form.submitForm", submitLimiter);
 
 app.get("/", (req, res) => {
   return res.json({ message: "Streamyst is up and running..." });

@@ -36,6 +36,13 @@
       "when": 1779690380498,
       "tag": "0004_overconfident_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779723162994,
+      "tag": "0005_petite_maximus",
+      "breakpoints": true
     }
   ]
 }
