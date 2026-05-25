@@ -9,9 +9,11 @@ import {
   updateFieldOutputModel,
   deleteFieldInputModel,
   deleteFieldOutputModel,
-  getFieldsinputModel,
+  getFieldsInputModel,
   getFieldsOutputModel,
   listFormsOutputModel,
+  getFormByIdInputModel,
+  getFormByIdOutputModel
 } from "./model";
 import { generatePath } from "../../utils/path-generator";
 import { z } from "zod";
@@ -113,9 +115,24 @@ export const formRouter = router({
         protect: true,
       },
     })
-    .input(getFieldsinputModel)
+    .input(getFieldsInputModel)
     .output(getFieldsOutputModel)
     .query(async ({ input }) => {
       return formFieldService.getFields({ formId: input.formId });
+    }),
+
+  getForm: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/getForm"),
+        tags: TAGS,
+        protect: true,
+      },
+    })
+    .input(getFormByIdInputModel)
+    .output(getFormByIdOutputModel)
+    .query(async ({ input }) => {
+      return formService.getFormById({ formId: input.formId });
     }),
 });

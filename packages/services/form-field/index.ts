@@ -42,7 +42,7 @@ class FormFieldService {
 
     const result = await db
       .insert(formFieldTable)
-      .values({ label, labelKey, index, type, description, placeholder, isRequired })
+      .values({ label, labelKey, index, type, description, placeholder, isRequired, formId })
       .returning({ id: formFieldTable.id });
 
     if (!result || result.length === 0 || !result[0]?.id) {
