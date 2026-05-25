@@ -1,5 +1,6 @@
 "use client";
 import { trpc } from "~/trpc/client";
+import type { RouterOutputs } from "../../../../../packages/trpc/client/index";
 
 export const useCreateForm = () => {
   const utils = trpc.useUtils();
@@ -26,6 +27,9 @@ export const useCreateForm = () => {
   };
 };
 
+type Form = RouterOutputs["form"]["listForms"][number];
+export type Field = RouterOutputs["form"]["getFields"][number];
+
 export const useListForms = () => {
   const {
     data: forms,
@@ -37,7 +41,7 @@ export const useListForms = () => {
   } = trpc.form.listForms.useQuery();
 
   return {
-    forms,
+    forms: (forms ?? []) as Form[],
     error,
     failureCount,
     isError,
@@ -47,17 +51,26 @@ export const useListForms = () => {
 };
 
 export const useGetFields = (formId: string) => {
-  const {data: fields, isFetched, isFetching, isLoading, error, status} = trpc.form.getFields.useQuery({formId})
+  const {
+    data: fields,
+    isFetched,
+    isFetching,
+    isLoading,
+    error,
+    refetch,
+    status,
+  } = trpc.form.getFields.useQuery({ formId }, { enabled: Boolean(formId) });
 
   return {
-    fields,
+    fields: fields ?? [],
     error,
     isFetching,
     isLoading,
     status,
-    isFetched
-  }
-}
+    isFetched,
+    refetch,
+  };
+};
 
 export const useCreateField = (formId: string) => {
   const utils = trpc.useUtils();
@@ -68,24 +81,39 @@ export const useCreateField = (formId: string) => {
     failureCount,
     isIdle,
     isSuccess,
-    status
+    status,
   } = trpc.form.createField.useMutation({
-    onSuccess: async () => {
-      await utils.form.getFields.invalidate({ formId });
+    onSuccess: (createdField, variables) => {
+      if (variables.formId !== formId) {
+        return;
+      }
+
+      utils.form.getFields.setData({ formId }, (fields) => {
+        const currentFields = fields ?? [];
+        const fieldAlreadyRendered = currentFields.some((field) => field.id === createdField.id);
+
+        if (fieldAlreadyRendered) {
+          return currentFields;
+        }
+
+        return [...currentFields, createdField as Field];
+      });
+
+      void utils.form.getFields.invalidate({ formId });
+      void utils.form.getFields.refetch({ formId });
     },
   });
 
-return {
+  return {
     CreateFieldAsync,
     CreateField,
     failureCount,
     error,
     isIdle,
     isSuccess,
-    status
-  }
-
-}
+    status,
+  };
+};
 
 export const useUpdateField = (formId: string) => {
   const utils = trpc.useUtils();
@@ -96,23 +124,23 @@ export const useUpdateField = (formId: string) => {
     failureCount,
     isIdle,
     isSuccess,
-    status
+    status,
   } = trpc.form.updateField.useMutation({
     onSuccess: async () => {
       await utils.form.getFields.invalidate({ formId });
     },
   });
 
-return {
+  return {
     UpdateFieldAsync,
     UpdateField,
     failureCount,
     error,
     isIdle,
     isSuccess,
-    status
-  }
-}
+    status,
+  };
+};
 
 export const useDeleteField = (formId: string) => {
   const utils = trpc.useUtils();
@@ -123,20 +151,20 @@ export const useDeleteField = (formId: string) => {
     failureCount,
     isIdle,
     isSuccess,
-    status
-  } = trpc.form.updateField.useMutation({
+    status,
+  } = trpc.form.deleteField.useMutation({
     onSuccess: async () => {
       await utils.form.getFields.invalidate({ formId });
     },
   });
 
-return {
+  return {
     deleteFieldAsync,
     deleteField,
     failureCount,
     error,
     isIdle,
     isSuccess,
-    status
-  }
-}
+    status,
+  };
+};

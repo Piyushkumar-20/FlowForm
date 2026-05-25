@@ -57,13 +57,17 @@ export const updateFieldOutputModel = z.object({
   id: z.string().uuid().describe("Form id or the forms"),
   label: z.string().describe("Label of the form"),
   type: formFieldEnum.describe("Enums of the fields"),
-  description: z.string().optional().describe("Helper text for the fields"),
-  placeholder: z.string().optional().describe("Placeholder for the Form Field"),
+  description: z.string().nullable().optional().describe("Helper text for the fields"),
+  placeholder: z.string().nullable().optional().describe("Placeholder for the Form Field"),
   isRequired: z.boolean().default(false).describe("Weather the field is mandatory is not"),
 });
 
 export const deleteFieldInputModel = z.object({
   fieldId: z.string().uuid().describe("Form id or the forms"),
+});
+
+export const deleteFieldOutputModel = z.object({
+  id: z.string().uuid().describe("Deleted field id"),
 });
 
 export const getFieldsinputModel = z.object({

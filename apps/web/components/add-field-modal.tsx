@@ -1,42 +1,46 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Controller, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "sonner"
-import { z } from "zod"
+import * as React from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { z } from "zod";
 
-import { Button } from "~/components/ui/button"
+import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog"
-import { Checkbox } from "~/components/ui/checkbox"
-import { Input } from "~/components/ui/input"
+} from "~/components/ui/dialog";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Input } from "~/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select"
-import { useCreateField } from "~/hooks/api/form"
+} from "~/components/ui/select";
+import { type Field, useCreateField } from "~/hooks/api/form";
 
-const fieldTypes = ["TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD"] as const
+const fieldTypes = ["TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD"] as const;
 
 const addFieldSchema = z.object({
-  label: z.string().trim().min(1, "Label is required").max(100, "Label must be at most 100 characters"),
+  label: z
+    .string()
+    .trim()
+    .min(1, "Label is required")
+    .max(100, "Label must be at most 100 characters"),
   type: z.enum(fieldTypes),
   description: z.string().trim().max(300, "Description must be at most 300 characters").optional(),
   placeholder: z.string().trim().max(300, "Placeholder must be at most 300 characters").optional(),
   isRequired: z.boolean().default(false),
-})
+});
 
-type AddFieldInput = z.input<typeof addFieldSchema>
-type AddFieldValues = z.output<typeof addFieldSchema>
+type AddFieldInput = z.input<typeof addFieldSchema>;
+type AddFieldValues = z.output<typeof addFieldSchema>;
 
 const defaultValues: AddFieldValues = {
   label: "",
@@ -44,51 +48,53 @@ const defaultValues: AddFieldValues = {
   description: "",
   placeholder: "",
   isRequired: false,
-}
+};
 
 interface AddFieldModalProps {
-  formId: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  formId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onFieldCreated?: (field: Field) => void;
 }
 
-export function AddFieldModal({ formId, open, onOpenChange }: AddFieldModalProps) {
-  const { CreateFieldAsync } = useCreateField(formId)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+export function AddFieldModal({ formId, open, onOpenChange, onFieldCreated }: AddFieldModalProps) {
+  const { CreateFieldAsync } = useCreateField(formId);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<AddFieldInput, undefined, AddFieldValues>({
     resolver: zodResolver(addFieldSchema),
     defaultValues,
-  })
+  });
 
   React.useEffect(() => {
     if (!open) {
-      form.reset(defaultValues)
+      form.reset(defaultValues);
     }
-  }, [form, open])
+  }, [form, open]);
 
   const onSubmit = async (values: AddFieldValues) => {
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
-      await CreateFieldAsync({
+      const createdField = await CreateFieldAsync({
         formId,
         label: values.label.trim(),
         type: values.type,
         description: values.description?.trim() || undefined,
         placeholder: values.placeholder?.trim() || undefined,
         isRequired: values.isRequired,
-      })
+      });
 
-      toast.success("Field added")
-      form.reset(defaultValues)
-      onOpenChange(false)
+      onFieldCreated?.(createdField);
+      toast.success("Field added");
+      form.reset(defaultValues);
+      onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not add field")
+      toast.error(error instanceof Error ? error.message : "Could not add field");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,9 +113,7 @@ export function AddFieldModal({ formId, open, onOpenChange }: AddFieldModalProps
             </label>
             <Input id="label" placeholder="Full name" {...form.register("label")} />
             {form.formState.errors.label ? (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.label.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.label.message}</p>
             ) : null}
           </div>
 
@@ -140,9 +144,7 @@ export function AddFieldModal({ formId, open, onOpenChange }: AddFieldModalProps
               )}
             />
             {form.formState.errors.type ? (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.type.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.type.message}</p>
             ) : null}
           </div>
 
@@ -206,5 +208,5 @@ export function AddFieldModal({ formId, open, onOpenChange }: AddFieldModalProps
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

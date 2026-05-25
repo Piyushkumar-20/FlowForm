@@ -16,7 +16,8 @@ function toLabelKey(label: string): string {
   return label
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9_]/g, "")
+    .replace(/[^a-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
     .replace(/^_|_$/g, "");
 }
 
@@ -44,24 +45,27 @@ class FormFieldService {
       .values({ label, labelKey, index, type, description, placeholder, isRequired })
       .returning({ id: formFieldTable.id });
 
-      if (!result || result.length === 0 || !result[0]?.id) { 
-        throw new Error("Something Went Wrong");
-      }
-      return {
-        id: result[0].id,
-        label,
-        type,
-        description,
-        placeholder,
-        isRequired,
-      };; 
+    if (!result || result.length === 0 || !result[0]?.id) {
+      throw new Error("Something Went Wrong");
+    }
+    return {
+      id: result[0].id,
+      label,
+      type,
+      description,
+      placeholder,
+      isRequired,
+    };
   }
 
   public async updateField(payload: UpdateFieldInputType) {
     const { fieldId, ...updates } = await updateFieldInput.parseAsync(payload);
 
     const patch: Partial<typeof formFieldTable.$inferInsert> = {};
-    if (updates.label !== undefined) patch.label = updates.label;
+    if (updates.label !== undefined) {
+      patch.label = updates.label;
+      patch.labelKey = toLabelKey(updates.label);
+    }
     if (updates.type !== undefined) patch.type = updates.type;
     if ("description" in updates) patch.description = updates.description ?? null;
     if ("placeholder" in updates) patch.placeholder = updates.placeholder ?? null;
@@ -73,9 +77,16 @@ class FormFieldService {
       .update(formFieldTable)
       .set(patch)
       .where(eq(formFieldTable.id, fieldId))
-      .returning({ id: formFieldTable.id });
+      .returning({
+        id: formFieldTable.id,
+        label: formFieldTable.label,
+        type: formFieldTable.type,
+        description: formFieldTable.description,
+        placeholder: formFieldTable.placeholder,
+        isRequired: formFieldTable.isRequired,
+      });
     if (!result || result.length === 0) throw new Error(`Field With ID ${fieldId} does not exist`);
-    return { id: result[0]!.id };
+    return result[0]!;
   }
 
   public async deleteField(payload: DeleteFieldInputType) {
@@ -86,19 +97,15 @@ class FormFieldService {
       .where(eq(formFieldTable.id, fieldId))
       .returning({ id: formFieldTable.id });
 
-    if (!result || result.length === 0)
-      throw new Error(`Field With ID ${fieldId} does not exist`);
+    if (!result || result.length === 0) throw new Error(`Field With ID ${fieldId} does not exist`);
 
     return { id: result[0]!.id };
   }
 
   public async getFields(payload: GetFieldsInputType) {
     const { formId } = await getFieldsInput.parseAsync(payload);
-  
-    const result = await db
-      .select()
-      .from(formFieldTable)
-      .where(eq(formFieldTable.formId, formId));
+
+    const result = await db.select().from(formFieldTable).where(eq(formFieldTable.formId, formId));
 
     return result;
   }
