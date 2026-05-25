@@ -9,5 +9,9 @@ export const submitFormInput = z.object({
     }),
   ),
 });
-
 export type SubmitFormInputType = z.infer<typeof submitFormInput>;
+
+export const getFormSubmissionsInput = z.object({
+  formId: z.string().uuid().describe("UUID of the form"),
+});
+export type GetFormSubmissionsInputType = z.infer<typeof getFormSubmissionsInput>;

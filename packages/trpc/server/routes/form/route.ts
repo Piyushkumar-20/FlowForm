@@ -16,6 +16,8 @@ import {
   getFormByIdOutputModel,
   submitFormInputModel,
   submitFormOutputModel,
+  getFormSubmissionsInputModel,
+  getFormSubmissionsOutputModel,
 } from "./model";
 import { generatePath } from "../../utils/path-generator";
 import { z } from "zod";
@@ -138,13 +140,28 @@ export const formRouter = router({
       return formService.getFormById({ formId: input.formId });
     }),
 
+  getFormSubmissions: authenticateProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/getFormSubmissions"),
+        tags: TAGS,
+        protect: true,
+      },
+    })
+    .input(getFormSubmissionsInputModel)
+    .output(getFormSubmissionsOutputModel)
+    .query(async ({ input }) => {
+      return formSubmissionService.getFormSubmissions({ formId: input.formId });
+    }),
+
   submitForm: publicProcedure
     .meta({
       openapi: {
         method: "POST",
         path: getPath("/submitForm"),
         tags: TAGS,
-        protect: false,
+        protect: true,
       },
     })
     .input(submitFormInputModel)

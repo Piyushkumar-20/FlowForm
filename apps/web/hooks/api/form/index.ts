@@ -169,6 +169,24 @@ export const useDeleteField = (formId: string) => {
   };
 };
 
+export const useGetFormSubmissions = (formId: string) => {
+  const {
+    data: submissions,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = trpc.form.getFormSubmissions.useQuery({ formId }, { enabled: Boolean(formId) });
+
+  return {
+    submissions: submissions ?? [],
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  };
+};
+
 export const useSubmitForm = () => {
   const {
     mutateAsync: submitFormAsync,

@@ -137,6 +137,25 @@ export const submitFormOutputModel = z.object({
   createdAt: z.date().describe("Submission timestamp"),
 });
 
+/* GET FORM SUBMISSIONS */
+
+export const getFormSubmissionsInputModel = z.object({
+  formId: z.string().uuid().describe("UUID of the form"),
+});
+
+export const getFormSubmissionsOutputModel = z.array(
+  z.object({
+    id: z.string().uuid().describe("Submission ID"),
+    values: z.array(
+      z.object({
+        formFieldId: z.string().uuid(),
+        value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+      }),
+    ),
+    createdAt: z.date().describe("Submission timestamp"),
+  }),
+);
+
 /* GET FORM BY ID*/
 
 export const getFormByIdInputModel= z.object({
