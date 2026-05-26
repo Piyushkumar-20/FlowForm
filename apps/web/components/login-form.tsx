@@ -21,6 +21,7 @@ import {
 import { Input } from "~/components/ui/input"
 import { useSignin } from "~/hooks/api/auth"
 import { toast } from "sonner"
+import { getTRPCErrorMessage } from "~/lib/trpc-error"
 
 export type LoginFormValues = {
   email: string
@@ -48,8 +49,7 @@ export function LoginForm({
       })
       router.replace('/dashboard')
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed"
-      toast.error(message)
+      toast.error(getTRPCErrorMessage(error as { message?: string; data?: { code?: string } }, "Sign in failed. Please try again."));
     }
   }
 

@@ -158,7 +158,11 @@ export function PublicFormRenderer({
       return { formFieldId: field.id, value };
     });
 
-    await submitFormAsync({ formId, values: payload });
+    try {
+      await submitFormAsync({ formId, values: payload });
+    } catch {
+      // onError in useSubmitForm handles the toast
+    }
   };
 
   if (isSuccess) {
@@ -469,9 +473,7 @@ export function PublicFormRenderer({
 
       {submitError ? (
         <p className="text-center text-[12px] font-medium text-rose-400">
-          {submitError instanceof Error
-            ? submitError.message
-            : "Submission failed. Please try again."}
+          Submission failed. Please try again.
         </p>
       ) : null}
 

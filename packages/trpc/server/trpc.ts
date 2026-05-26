@@ -15,7 +15,22 @@ export type TRPCRouterRoot = {
 export const tRPCContext = initTRPC
   .meta<OpenApiMeta>()
   .context<typeof createContext>()
-  .create({});
+  .create({
+    errorFormatter({ shape, error }) {
+      const isProd = process.env.NODE_ENV === "production";
+      return {
+        ...shape,
+        message:
+          isProd && error.code === "INTERNAL_SERVER_ERROR"
+            ? "Something went wrong. Please try again."
+            : shape.message,
+        data: {
+          ...shape.data,
+          stack: isProd ? undefined : shape.data?.stack,
+        },
+      };
+    },
+  });
 
 export const router = tRPCContext.router;
 

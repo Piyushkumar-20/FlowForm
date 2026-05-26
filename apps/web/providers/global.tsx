@@ -14,6 +14,11 @@ const queryClient = new QueryClient({
       refetchOnMount: true,
       staleTime: Infinity,
     },
+    mutations: {
+      onError: (err) => {
+        console.error("[QueryClient] unhandled mutation error:", err);
+      },
+    },
   },
 });
 

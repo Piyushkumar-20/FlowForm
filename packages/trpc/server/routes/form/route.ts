@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { publicProcedure, router, authenticateProcedure, adminProcedure } from "../../trpc";
 import { formService, formFieldService, formSubmissionService } from "../../services";
 import {
@@ -61,8 +62,9 @@ export const formRouter = router({
         console.log("[createForm] success | formId:", id, "| userId:", ctx.user.id);
         return { id, createdAt };
       } catch (err) {
-        console.error("[createForm] DB error | userId:", ctx.user.id, "| error:", err);
-        throw err;
+        if (err instanceof TRPCError) throw err;
+        console.error("[createForm] error | userId:", ctx.user.id, "| error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to create form. Please try again." });
       }
     }),
 
@@ -71,7 +73,13 @@ export const formRouter = router({
     .input(updateFormInputModel)
     .output(updateFormOutputModel)
     .mutation(async ({ ctx, input }) => {
-      return formService.updateForm(input, ctx.user.id);
+      try {
+        return await formService.updateForm(input, ctx.user.id);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[updateForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to save changes." });
+      }
     }),
 
   publishForm: authenticateProcedure
@@ -79,7 +87,13 @@ export const formRouter = router({
     .input(publishFormInputModel)
     .output(publishFormOutputModel)
     .mutation(async ({ ctx, input }) => {
-      return formService.publishForm(input, ctx.user.id);
+      try {
+        return await formService.publishForm(input, ctx.user.id);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[publishForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to publish form. Please try again." });
+      }
     }),
 
   unpublishForm: authenticateProcedure
@@ -87,7 +101,13 @@ export const formRouter = router({
     .input(unpublishFormInputModel)
     .output(unpublishFormOutputModel)
     .mutation(async ({ ctx, input }) => {
-      return formService.unpublishForm(input, ctx.user.id);
+      try {
+        return await formService.unpublishForm(input, ctx.user.id);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[unpublishForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to unpublish form. Please try again." });
+      }
     }),
 
   deleteForm: authenticateProcedure
@@ -95,7 +115,13 @@ export const formRouter = router({
     .input(deleteFormInputModel)
     .output(deleteFormOutputModel)
     .mutation(async ({ ctx, input }) => {
-      return formService.deleteForm(input, ctx.user.id);
+      try {
+        return await formService.deleteForm(input, ctx.user.id);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[deleteForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to delete form. Please try again." });
+      }
     }),
 
   listForms: authenticateProcedure
@@ -139,7 +165,13 @@ export const formRouter = router({
     .input(createFieldInputModel)
     .output(createFieldOutputModel)
     .mutation(async ({ input }) => {
-      return formFieldService.createField(input);
+      try {
+        return await formFieldService.createField(input);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[createField] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to add field. Please try again." });
+      }
     }),
 
   updateField: authenticateProcedure
@@ -147,7 +179,13 @@ export const formRouter = router({
     .input(updateFieldInputModel)
     .output(updateFieldOutputModel)
     .mutation(async ({ input }) => {
-      return formFieldService.updateField(input);
+      try {
+        return await formFieldService.updateField(input);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[updateField] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update field." });
+      }
     }),
 
   deleteField: authenticateProcedure
@@ -155,7 +193,13 @@ export const formRouter = router({
     .input(deleteFieldInputModel)
     .output(deleteFieldOutputModel)
     .mutation(async ({ input }) => {
-      return formFieldService.deleteField(input);
+      try {
+        return await formFieldService.deleteField(input);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[deleteField] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete field." });
+      }
     }),
 
   getFields: authenticateProcedure
@@ -173,7 +217,13 @@ export const formRouter = router({
     .input(submitFormInputModel)
     .output(submitFormOutputModel)
     .mutation(async ({ input }) => {
-      return formSubmissionService.submitForm(input);
+      try {
+        return await formSubmissionService.submitForm(input);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[submitForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to submit form. Please try again." });
+      }
     }),
 
   getFormSubmissions: authenticateProcedure
@@ -191,7 +241,13 @@ export const formRouter = router({
     .input(cloneFormInputModel)
     .output(cloneFormOutputModel)
     .mutation(async ({ ctx, input }) => {
-      return formService.cloneForm({ formId: input.formId }, ctx.user.id);
+      try {
+        return await formService.cloneForm({ formId: input.formId }, ctx.user.id);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[cloneForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to clone form. Please try again." });
+      }
     }),
 
   archiveForm: authenticateProcedure
@@ -199,7 +255,13 @@ export const formRouter = router({
     .input(archiveFormInputModel)
     .output(archiveFormOutputModel)
     .mutation(async ({ ctx, input }) => {
-      return formService.archiveForm({ formId: input.formId }, ctx.user.id);
+      try {
+        return await formService.archiveForm({ formId: input.formId }, ctx.user.id);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[archiveForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to archive form. Please try again." });
+      }
     }),
 
   restoreForm: authenticateProcedure
@@ -207,7 +269,13 @@ export const formRouter = router({
     .input(archiveFormInputModel)
     .output(archiveFormOutputModel)
     .mutation(async ({ ctx, input }) => {
-      return formService.restoreForm({ formId: input.formId }, ctx.user.id);
+      try {
+        return await formService.restoreForm({ formId: input.formId }, ctx.user.id);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[restoreForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to restore form. Please try again." });
+      }
     }),
 
   /* ── SLUG-BASED ACCESS ──────────────────────────────────────────────── */

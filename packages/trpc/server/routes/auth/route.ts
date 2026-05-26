@@ -33,12 +33,19 @@ export const authRouter = router({
     .output(createUserWithEmailAndPasswordOutputModel)
     .mutation(async ({ input, ctx }) => {
       const { fullName, email, password } = input;
-      const { id, token } = await userService.createUserWithEmailAndPassword({ fullName, email, password });
-
-      setAuthenticationCookie(ctx, token);
-      return {
-        id
-      };
+      try {
+        const { id, token } = await userService.createUserWithEmailAndPassword({ fullName, email, password });
+        setAuthenticationCookie(ctx, token);
+        return { id };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        const msg = err instanceof Error ? err.message.toLowerCase() : "";
+        console.error("[auth.createUser] error:", err);
+        if (msg.includes("already exist")) {
+          throw new TRPCError({ code: "CONFLICT", message: "An account with this email already exists." });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to create account. Please try again." });
+      }
     }),
 
   signInUserWithEmailAndPassword: publicProcedure
@@ -51,18 +58,22 @@ export const authRouter = router({
     })
     .input(signInUserWithEmailAndPasswordInputModel)
     .output(signInUserWithEmailAndPasswordOutputModel)
-    .mutation(async ({ input, ctx }) => { 
+    .mutation(async ({ input, ctx }) => {
       const { email, password } = input;
-      
-
-      const { id, token } = await userService.signInUserWithEmailAndPassword({ email, password });
-  
-      setAuthenticationCookie(ctx, token);
-      
-      return {
-        id
-      };
-    }), 
+      try {
+        const { id, token } = await userService.signInUserWithEmailAndPassword({ email, password });
+        setAuthenticationCookie(ctx, token);
+        return { id };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        const msg = err instanceof Error ? err.message.toLowerCase() : "";
+        console.error("[auth.signIn] error:", err);
+        if (msg.includes("invalid username") || msg.includes("invalid authentication")) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password." });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Sign in failed. Please try again." });
+      }
+    }),
 
   logout: authenticateProcedure
     .meta({

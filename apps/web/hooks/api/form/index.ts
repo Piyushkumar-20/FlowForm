@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { trpc } from "~/trpc/client";
+import { getTRPCErrorMessage } from "~/lib/trpc-error";
 import type { RouterOutputs } from "../../../../../packages/trpc/client/index";
 
 export const useCreateForm = () => {
@@ -19,7 +20,7 @@ export const useCreateForm = () => {
     },
     onError: (err) => {
       console.error("[useCreateForm] mutation failed:", err.message);
-      toast.error(err.message || "Failed to create form. Please try again.");
+      toast.error(getTRPCErrorMessage(err, "Unable to create form. Please try again."));
     },
   });
 
@@ -182,7 +183,11 @@ export const useSubmitForm = () => {
     isSuccess,
     error,
     reset,
-  } = trpc.form.submitForm.useMutation();
+  } = trpc.form.submitForm.useMutation({
+    onError: (err) => {
+      toast.error(getTRPCErrorMessage(err, "Failed to submit form. Please try again."));
+    },
+  });
 
   return { submitFormAsync, submitForm, isPending, isSuccess, error, reset };
 };

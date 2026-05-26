@@ -209,8 +209,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       setEditingField(null);
       toast.success("Field updated");
       void refetch();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update field");
+    } catch {
+      toast.error("Failed to update field. Please try again.");
     }
   };
 
@@ -234,7 +234,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         if (current.some((f) => f.id === field.id)) return current;
         return [...current, field];
       });
-      toast.error(err instanceof Error ? err.message : "Could not delete field");
+      toast.error("Failed to delete field. Please try again.");
     }
   };
 
@@ -255,8 +255,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         await publishFormAsync({ formId });
         toast.success("Form is now live");
       }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update form status");
+    } catch {
+      toast.error("Failed to update form status. Please try again.");
     }
   };
 
@@ -264,8 +264,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     try {
       await updateFormAsync({ formId, visibility });
       toast.success(`Visibility set to ${visibility}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update visibility");
+    } catch {
+      toast.error("Failed to update visibility. Please try again.");
     }
   };
 
@@ -280,8 +280,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       await deleteFormAsync({ formId });
       toast.success("Form deleted");
       router.push("/dashboard/forms");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not delete form");
+    } catch {
+      toast.error("Failed to delete form. Please try again.");
     }
   };
 
@@ -296,8 +296,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         slug: slugValue,
       });
       toast.success("Settings saved");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save settings");
+    } catch {
+      toast.error("Failed to save settings. Please try again.");
     } finally {
       setIsSavingSettings(false);
     }
@@ -324,7 +324,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       toast.success("Conditions saved");
       void refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save conditions");
+      toast.error("Failed to save conditions. Please try again.");
       throw err;
     }
   };
@@ -518,9 +518,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         ) : fieldsError ? (
           <Card className="rounded-2xl border-destructive/30 bg-destructive/5 p-5">
             <CardContent className="px-0 text-sm text-destructive">
-              {fieldsError instanceof Error
-                ? fieldsError.message
-                : "Could not load this form's fields."}
+              Could not load this form&apos;s fields. Please refresh and try again.
             </CardContent>
           </Card>
         ) : localFields.length ? (

@@ -129,8 +129,8 @@ export function AddFieldModal({ formId, open, onOpenChange, onFieldCreated }: Ad
       setOptions([]);
       setNewOption("");
       onOpenChange(false);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not add field");
+    } catch {
+      toast.error("Unable to add field. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

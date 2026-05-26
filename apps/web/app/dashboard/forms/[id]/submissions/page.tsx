@@ -198,7 +198,7 @@ export default function SubmissionsPage({
         ) : error ? (
           <Card className="rounded-2xl border-destructive/30 bg-destructive/5">
             <CardContent className="py-8 text-sm text-destructive">
-              {error instanceof Error ? error.message : "Could not load submissions."}
+              Could not load submissions. Please refresh and try again.
             </CardContent>
           </Card>
         ) : fields.length === 0 ? (

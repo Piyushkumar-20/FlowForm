@@ -91,9 +91,7 @@ export default function ExplorePage() {
             </div>
           ) : error ? (
             <div className="rounded-[10px] border border-rose-500/30 bg-rose-500/[0.06] p-5 text-sm text-rose-300">
-              {error instanceof Error
-                ? error.message
-                : "Could not load public forms."}
+              Could not load public forms. Please try again.
             </div>
           ) : forms.length === 0 ? (
             <div className="flex flex-col items-center gap-4 py-20 text-center">

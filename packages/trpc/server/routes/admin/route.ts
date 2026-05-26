@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { userService, formService } from "../../services";
 import { adminProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
@@ -46,7 +47,13 @@ export const adminRouter = router({
     .input(adminModerateFormInputModel)
     .output(adminModerateFormOutputModel)
     .mutation(async ({ input }) => {
-      return formService.adminArchiveAnyForm(input.formId);
+      try {
+        return await formService.adminArchiveAnyForm(input.formId);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[admin.archiveAnyForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to archive form." });
+      }
     }),
 
   unarchiveAnyForm: adminProcedure
@@ -54,7 +61,13 @@ export const adminRouter = router({
     .input(adminModerateFormInputModel)
     .output(adminModerateFormOutputModel)
     .mutation(async ({ input }) => {
-      return formService.adminUnarchiveAnyForm(input.formId);
+      try {
+        return await formService.adminUnarchiveAnyForm(input.formId);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[admin.unarchiveAnyForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to restore form." });
+      }
     }),
 
   deleteAnyForm: adminProcedure
@@ -62,7 +75,13 @@ export const adminRouter = router({
     .input(adminModerateFormInputModel)
     .output(adminModerateFormOutputModel)
     .mutation(async ({ input }) => {
-      return formService.adminDeleteAnyForm(input.formId);
+      try {
+        return await formService.adminDeleteAnyForm(input.formId);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[admin.deleteAnyForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete form." });
+      }
     }),
 
   toggleFeaturedForm: adminProcedure
@@ -70,6 +89,12 @@ export const adminRouter = router({
     .input(adminModerateFormInputModel)
     .output(adminToggleFeaturedOutputModel)
     .mutation(async ({ input }) => {
-      return formService.adminToggleFeaturedForm(input.formId);
+      try {
+        return await formService.adminToggleFeaturedForm(input.formId);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[admin.toggleFeaturedForm] error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update featured status." });
+      }
     }),
 });

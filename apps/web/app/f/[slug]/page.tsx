@@ -74,7 +74,7 @@ export default function SlugFormPage({ params }: { params: Promise<{ slug: strin
 
           {error ? (
             <div className="rounded-[10px] border border-rose-500/30 bg-rose-500/[0.06] p-4 text-sm text-rose-300">
-              {error instanceof Error ? error.message : "This form could not be loaded."}
+              This form could not be loaded. Please try again.
             </div>
           ) : isLoading ? (
             <div className="flex flex-col gap-5">

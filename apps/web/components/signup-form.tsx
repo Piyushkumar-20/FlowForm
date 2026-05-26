@@ -1,6 +1,8 @@
 "use client"
 import { useSignup } from "~/hooks/api/auth"
 import { cn } from "~/lib/utils"
+import { toast } from "sonner"
+import { getTRPCErrorMessage } from "~/lib/trpc-error"
 import {useRouter} from 'next/navigation'
 import { Button } from "~/components/ui/button"
 import {
@@ -45,14 +47,16 @@ export function SignupForm({
   })
 
   const onSubmit = async (values: SignupFormValues) => {
-    console.log(values)
-    const{id} = await createUserWithEmailAndPasswordAsync({
-      fullName: values.name,
-      email: values.email,
-      password: values.password
-    })
-    console.log('User created with id: ', id)
-    router.replace('/dashboard')
+    try {
+      await createUserWithEmailAndPasswordAsync({
+        fullName: values.name,
+        email: values.email,
+        password: values.password,
+      });
+      router.replace("/dashboard");
+    } catch (err) {
+      toast.error(getTRPCErrorMessage(err as { message?: string; data?: { code?: string } }, "Unable to create account. Please try again."));
+    }
   }
 
   return (
