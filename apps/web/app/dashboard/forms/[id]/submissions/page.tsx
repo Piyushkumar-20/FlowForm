@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { InboxIcon } from "lucide-react";
+import { DownloadIcon, InboxIcon } from "lucide-react";
 
 import type { RouterOutputs } from "@repo/trpc/client";
 import { useGetFields, useGetFormSubmissions } from "~/hooks/api/form";
 
 type Submission = RouterOutputs["form"]["getFormSubmissions"][number];
+import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import {
   Table,
@@ -34,6 +35,37 @@ function formatValue(value: string | number | boolean | null | undefined) {
   return String(value);
 }
 
+function escapeCsv(value: string) {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function downloadCsv(
+  fields: { id: string; label: string }[],
+  submissions: Submission[],
+) {
+  const headers = ["Submitted At", ...fields.map((f) => f.label)];
+  const rows = submissions.map((s) => {
+    const map = new Map(s.values.map((v) => [v.formFieldId, v.value]));
+    return [
+      formatDate(s.createdAt),
+      ...fields.map((f) => formatValue(map.get(f.id))),
+    ];
+  });
+  const csv = [headers, ...rows]
+    .map((row) => row.map(escapeCsv).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `submissions-${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function SubmissionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: formId } = React.use(params);
 
@@ -50,9 +82,22 @@ export default function SubmissionsPage({ params }: { params: Promise<{ id: stri
   return (
     <main className="flex flex-1 justify-center px-4 py-8 md:px-8">
       <div className="w-full max-w-6xl space-y-5">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Documents</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Submissions</h1>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Documents</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight">Submissions</h1>
+          </div>
+          {!isLoading && !error && submissions.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => downloadCsv(fields, submissions)}
+            >
+              <DownloadIcon className="size-4" />
+              Export CSV
+            </Button>
+          )}
         </div>
 
         {isLoading ? (

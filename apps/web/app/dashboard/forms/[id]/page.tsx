@@ -7,14 +7,19 @@ import {
   ArrowLeftIcon,
   CheckIcon,
   CopyIcon,
+  EyeIcon,
+  GitBranchIcon,
   PencilIcon,
   PlusIcon,
+  SettingsIcon,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AddFieldModal } from "~/components/add-field-modal";
+import { FieldConditionsModal } from "~/components/field-conditions-modal";
+import { FormPreviewSheet } from "~/components/form-preview-sheet";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -82,9 +87,12 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
 
   const [isAddFieldOpen, setIsAddFieldOpen] = React.useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const [localFields, setLocalFields] = React.useState<Field[]>([]);
   const [deletedFieldIds, setDeletedFieldIds] = React.useState<Set<string>>(() => new Set());
   const [editingField, setEditingField] = React.useState<Field | null>(null);
+  const [conditionsField, setConditionsField] = React.useState<Field | null>(null);
   const [editValues, setEditValues] = React.useState({
     label: "",
     type: "TEXT" as (typeof fieldTypes)[number],
@@ -95,6 +103,12 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   });
   const [newEditOption, setNewEditOption] = React.useState("");
   const [copied, setCopied] = React.useState(false);
+  const [settingsValues, setSettingsValues] = React.useState({
+    expiresAt: "",
+    maxResponses: "",
+    slug: "",
+  });
+  const [isSavingSettings, setIsSavingSettings] = React.useState(false);
 
   const { form, isLoading: formLoading } = useGetFormForDashboard(formId);
   const { fields, isLoading: fieldsLoading, error: fieldsError, refetch } = useGetFields(formId);
@@ -109,6 +123,17 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     setLocalFields([]);
     setDeletedFieldIds(new Set());
   }, [formId]);
+
+  React.useEffect(() => {
+    if (!form) return;
+    setSettingsValues({
+      expiresAt: form.expiresAt
+        ? new Date(form.expiresAt).toISOString().slice(0, 16)
+        : "",
+      maxResponses: form.maxResponses != null ? String(form.maxResponses) : "",
+      slug: form.slug ?? "",
+    });
+  }, [form]);
 
   React.useEffect(() => {
     setLocalFields((currentFields) => {
@@ -256,6 +281,50 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const slugValue = settingsValues.slug.trim() || null;
+      await updateFormAsync({
+        formId,
+        expiresAt: settingsValues.expiresAt ? new Date(settingsValues.expiresAt) : null,
+        maxResponses: settingsValues.maxResponses ? parseInt(settingsValues.maxResponses, 10) : null,
+        slug: slugValue,
+      });
+      toast.success("Settings saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save settings");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  type ConditionOperator = "equals" | "not_equals" | "contains" | "is_empty" | "is_not_empty";
+
+  const handleSaveConditions = async (
+    conditions: { fieldId: string; operator: string; value: string }[],
+  ) => {
+    if (!conditionsField) return;
+    try {
+      const typedConditions = conditions.map((c) => ({
+        ...c,
+        operator: c.operator as ConditionOperator,
+      }));
+      const updatedField = await UpdateFieldAsync({
+        fieldId: conditionsField.id,
+        conditions: typedConditions.length > 0 ? typedConditions : null,
+      });
+      setLocalFields((current) =>
+        current.map((f) => (f.id === updatedField.id ? { ...f, ...updatedField } : f)),
+      );
+      toast.success("Conditions saved");
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save conditions");
+      throw err;
+    }
+  };
+
   const isPublishPending = isPublishing || isUnpublishing;
   const needsEditOptions = editValues.type === "SELECT" || editValues.type === "CHECKBOX";
   const statusInfo = form ? STATUS_BADGE[form.status] : null;
@@ -299,6 +368,33 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Preview */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setIsPreviewOpen(true)}
+              disabled={localFields.length === 0}
+              title="Preview form as a respondent"
+            >
+              <EyeIcon className="size-4" />
+              Preview
+            </Button>
+
+            {/* Settings toggle */}
+            <Button
+              type="button"
+              variant={isSettingsOpen ? "secondary" : "outline"}
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setIsSettingsOpen((v) => !v)}
+              title="Form settings"
+            >
+              <SettingsIcon className="size-4" />
+              Settings
+            </Button>
+
             {/* Copy shareable link */}
             <Button
               type="button"
@@ -409,6 +505,20 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                       {field.isRequired ? (
                         <Badge className="rounded-lg px-2 py-0.5 text-xs">Required</Badge>
                       ) : null}
+                      {localFields.some((f) => (f.page ?? 1) > 1) ? (
+                        <Badge variant="outline" className="rounded-lg px-2 py-0.5 text-xs">
+                          Page {field.page ?? 1}
+                        </Badge>
+                      ) : null}
+                      {field.conditions && field.conditions.length > 0 ? (
+                        <Badge
+                          variant="outline"
+                          className="rounded-lg border-violet-500/40 px-2 py-0.5 text-xs text-violet-400"
+                        >
+                          {field.conditions.length} condition
+                          {field.conditions.length > 1 ? "s" : ""}
+                        </Badge>
+                      ) : null}
                     </div>
 
                     {field.description ? (
@@ -434,6 +544,17 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   <CardAction className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-muted-foreground hover:text-violet-400"
+                      onClick={() => setConditionsField(field)}
+                      aria-label={`Configure conditions for ${field.label}`}
+                      title="Conditional logic"
+                    >
+                      <GitBranchIcon className="size-4" />
+                    </Button>
                     <Button
                       type="button"
                       variant="ghost"
@@ -485,12 +606,137 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         )}
       </div>
 
+      {/* Settings panel */}
+      {isSettingsOpen && (
+        <Card className="rounded-2xl border-border/70 bg-card/70">
+          <CardHeader className="px-5 py-4">
+            <CardTitle className="text-base">Form Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5 px-5 pb-5 pt-0">
+            {/* Expiry */}
+            <div className="space-y-2">
+              <label htmlFor="expires-at" className="text-sm font-medium">
+                Expiry date &amp; time
+              </label>
+              <p className="text-xs text-muted-foreground">
+                The form will stop accepting responses after this date.
+              </p>
+              <Input
+                id="expires-at"
+                type="datetime-local"
+                value={settingsValues.expiresAt}
+                onChange={(e) =>
+                  setSettingsValues((v) => ({ ...v, expiresAt: e.target.value }))
+                }
+                className="max-w-xs"
+              />
+              {settingsValues.expiresAt && (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline"
+                  onClick={() => setSettingsValues((v) => ({ ...v, expiresAt: "" }))}
+                >
+                  Clear expiry
+                </button>
+              )}
+            </div>
+
+            {/* Max responses */}
+            <div className="space-y-2">
+              <label htmlFor="max-responses" className="text-sm font-medium">
+                Response limit
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Close the form automatically after this many responses.
+              </p>
+              <Input
+                id="max-responses"
+                type="number"
+                min={1}
+                placeholder="No limit"
+                value={settingsValues.maxResponses}
+                onChange={(e) =>
+                  setSettingsValues((v) => ({ ...v, maxResponses: e.target.value }))
+                }
+                className="max-w-[140px]"
+              />
+            </div>
+
+            {/* Custom slug */}
+            <div className="space-y-2">
+              <label htmlFor="form-slug" className="text-sm font-medium">
+                Custom URL slug
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Share via{" "}
+                <code className="rounded bg-muted px-1 text-xs">
+                  /f/your-slug
+                </code>
+                . Lowercase letters, numbers, and hyphens only.
+              </p>
+              <Input
+                id="form-slug"
+                placeholder="e.g. contact-form"
+                value={settingsValues.slug}
+                onChange={(e) =>
+                  setSettingsValues((v) => ({
+                    ...v,
+                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+                  }))
+                }
+                className="max-w-xs font-mono text-sm"
+              />
+              {settingsValues.slug && (
+                <p className="text-xs text-muted-foreground">
+                  URL:{" "}
+                  <span className="text-foreground">
+                    {typeof window !== "undefined" ? window.location.origin : ""}/f/
+                    {settingsValues.slug}
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => void handleSaveSettings()}
+                disabled={isSavingSettings}
+              >
+                {isSavingSettings ? "Saving…" : "Save settings"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <AddFieldModal
         formId={formId}
         open={isAddFieldOpen}
         onOpenChange={setIsAddFieldOpen}
         onFieldCreated={handleFieldCreated}
       />
+
+      <FormPreviewSheet
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        title={form?.title}
+        description={form?.description}
+        fields={localFields}
+      />
+
+      {/* Conditional Logic Modal */}
+      {conditionsField ? (
+        <FieldConditionsModal
+          open={Boolean(conditionsField)}
+          onOpenChange={(open) => !open && setConditionsField(null)}
+          field={conditionsField}
+          allFields={localFields}
+          onSave={handleSaveConditions}
+        />
+      ) : null}
 
       {/* Edit Field Dialog */}
       <Dialog open={Boolean(editingField)} onOpenChange={(open) => !open && setEditingField(null)}>

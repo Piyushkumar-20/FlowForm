@@ -52,6 +52,17 @@ export const useSignin = () => {
 
 };
 
+export const useLogout = () => {
+  const utils = trpc.useUtils()
+  const { mutateAsync: logoutAsync, isPending } = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      utils.auth.getLoggedInUser.reset();
+    },
+  });
+
+  return { logoutAsync, isPending };
+};
+
 export const useUser = () => {
   const {data: user, isFetched, isFetching, error, isLoading, status} = trpc.auth.getLoggedInUser.useQuery(undefined, {
     retry: false,

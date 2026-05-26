@@ -1,5 +1,5 @@
 import { formFieldTable } from "../../database/models/form-fields";
-import { db, eq, max } from "@repo/database";
+import { db, eq, max, asc } from "@repo/database";
 
 import {
   type CreateFieldInputType,
@@ -34,7 +34,7 @@ class FormFieldService {
   }
 
   public async createField(payload: CreateFieldInputType) {
-    const { label, type, formId, description, placeholder, isRequired, options } =
+    const { label, type, formId, description, placeholder, isRequired, options, page, conditions } =
       await createFieldInput.parseAsync(payload);
 
     const labelKey = toLabelKey(label);
@@ -52,22 +52,27 @@ class FormFieldService {
         isRequired,
         formId,
         options: options ?? null,
+        page: page ?? 1,
+        conditions: conditions ?? null,
       })
-      .returning({ id: formFieldTable.id });
+      .returning({
+        id: formFieldTable.id,
+        label: formFieldTable.label,
+        type: formFieldTable.type,
+        description: formFieldTable.description,
+        placeholder: formFieldTable.placeholder,
+        isRequired: formFieldTable.isRequired,
+        index: formFieldTable.index,
+        options: formFieldTable.options,
+        page: formFieldTable.page,
+        conditions: formFieldTable.conditions,
+      });
 
     if (!result || result.length === 0 || !result[0]?.id) {
       throw new Error("Something went wrong creating field");
     }
 
-    return {
-      id: result[0].id,
-      label,
-      type,
-      description,
-      placeholder,
-      isRequired,
-      options: options ?? null,
-    };
+    return result[0];
   }
 
   public async updateField(payload: UpdateFieldInputType) {
@@ -83,6 +88,8 @@ class FormFieldService {
     if ("placeholder" in updates) patch.placeholder = updates.placeholder ?? null;
     if (updates.isRequired !== undefined) patch.isRequired = updates.isRequired;
     if ("options" in updates) patch.options = updates.options ?? null;
+    if (updates.page !== undefined) patch.page = updates.page;
+    if ("conditions" in updates) patch.conditions = updates.conditions ?? null;
 
     if (Object.keys(patch).length === 0) throw new Error("No fields provided to update");
 
@@ -98,6 +105,8 @@ class FormFieldService {
         placeholder: formFieldTable.placeholder,
         isRequired: formFieldTable.isRequired,
         options: formFieldTable.options,
+        page: formFieldTable.page,
+        conditions: formFieldTable.conditions,
       });
 
     if (!result || result.length === 0) throw new Error(`Field with ID ${fieldId} does not exist`);
@@ -120,7 +129,11 @@ class FormFieldService {
   public async getFields(payload: GetFieldsInputType) {
     const { formId } = await getFieldsInput.parseAsync(payload);
 
-    return db.select().from(formFieldTable).where(eq(formFieldTable.formId, formId));
+    return db
+      .select()
+      .from(formFieldTable)
+      .where(eq(formFieldTable.formId, formId))
+      .orderBy(asc(formFieldTable.index));
   }
 }
 

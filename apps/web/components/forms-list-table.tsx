@@ -3,7 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
   CopyIcon,
+  CopyPlusIcon,
   ExternalLinkIcon,
   LayoutDashboardIcon,
   MessageSquareIcon,
@@ -27,7 +30,13 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { useGetFormSubmissions, useListForms } from "~/hooks/api/form";
+import {
+  useArchiveForm,
+  useCloneForm,
+  useGetFormSubmissions,
+  useListForms,
+  useRestoreForm,
+} from "~/hooks/api/form";
 
 type Form = ReturnType<typeof useListForms>["forms"][number];
 
@@ -83,11 +92,12 @@ interface FormRowProps {
 }
 
 function FormRow({ form }: FormRowProps) {
-  // Per-row submissions fetch — reuses the existing endpoint.
-  // Each row owns its own query so the hook order stays stable.
   const { submissions, isLoading: submissionsLoading } = useGetFormSubmissions(form.id);
-  const responseCount = submissions.length;
+  const { cloneFormAsync, isPending: isCloning } = useCloneForm();
+  const { archiveFormAsync, isPending: isArchiving } = useArchiveForm();
+  const { restoreFormAsync, isPending: isRestoring } = useRestoreForm();
 
+  const responseCount = submissions.length;
   const isPublished = form.status === "published";
 
   const handleCopyLink = () => {
@@ -100,8 +110,35 @@ function FormRow({ form }: FormRowProps) {
     toast.success("Share link copied", { description: url });
   };
 
+  const handleClone = async () => {
+    try {
+      await cloneFormAsync({ formId: form.id });
+      toast.success("Form cloned");
+    } catch {
+      toast.error("Could not clone form");
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await archiveFormAsync({ formId: form.id });
+      toast.success("Form archived");
+    } catch {
+      toast.error("Could not archive form");
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await restoreFormAsync({ formId: form.id });
+      toast.success("Form restored");
+    } catch {
+      toast.error("Could not restore form");
+    }
+  };
+
   return (
-    <TableRow className="group">
+    <TableRow className={`group ${form.isArchived ? "opacity-60" : ""}`}>
       {/* Title */}
       <TableCell className="font-medium">
         <Link
@@ -109,6 +146,11 @@ function FormRow({ form }: FormRowProps) {
           className="flex items-center gap-2 text-foreground transition-colors hover:text-primary"
         >
           <span className="truncate">{form.title ?? "Untitled form"}</span>
+          {form.isArchived ? (
+            <span className="inline-flex items-center rounded-md border border-zinc-700/60 bg-zinc-700/30 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+              Archived
+            </span>
+          ) : null}
         </Link>
         {form.description ? (
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
@@ -198,6 +240,32 @@ function FormRow({ form }: FormRowProps) {
                 </a>
               </DropdownMenuItem>
             ) : null}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => void handleClone()}
+              disabled={isCloning}
+            >
+              <CopyPlusIcon className="size-4" />
+              {isCloning ? "Cloning…" : "Clone form"}
+            </DropdownMenuItem>
+            {form.isArchived ? (
+              <DropdownMenuItem
+                onClick={() => void handleRestore()}
+                disabled={isRestoring}
+              >
+                <ArchiveRestoreIcon className="size-4" />
+                {isRestoring ? "Restoring…" : "Restore"}
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onClick={() => void handleArchive()}
+                disabled={isArchiving}
+                className="text-muted-foreground"
+              >
+                <ArchiveIcon className="size-4" />
+                {isArchiving ? "Archiving…" : "Archive"}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>

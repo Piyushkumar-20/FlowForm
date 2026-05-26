@@ -7,6 +7,7 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
+import { useRouter } from "next/navigation"
 
 import {
   Avatar,
@@ -28,6 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "~/components/ui/sidebar"
+import { useLogout } from "~/hooks/api/auth"
 
 export function NavUser({
   user,
@@ -39,6 +41,16 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const { logoutAsync, isPending } = useLogout()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await logoutAsync()
+    } finally {
+      router.replace("/")
+    }
+  }
 
   return (
     <SidebarMenu>
@@ -98,9 +110,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} disabled={isPending}>
               <IconLogout />
-              Log out
+              {isPending ? "Logging out…" : "Log out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

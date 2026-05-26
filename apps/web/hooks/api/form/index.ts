@@ -190,3 +190,40 @@ export const useGetForm = (formId: string) => {
 
   return { form, error, isFetching, isLoading, status, isFetched, refetch };
 };
+
+export const useGetFormBySlug = (slug: string) => {
+  const { data: form, isFetched, isFetching, isLoading, error, refetch, status } =
+    trpc.form.getFormBySlug.useQuery({ slug }, { enabled: Boolean(slug) });
+
+  return { form, error, isFetching, isLoading, status, isFetched, refetch };
+};
+
+export const useCloneForm = () => {
+  const utils = trpc.useUtils();
+  const { mutateAsync: cloneFormAsync, isPending } = trpc.form.cloneForm.useMutation({
+    onSuccess: async () => {
+      await utils.form.listForms.invalidate();
+    },
+  });
+  return { cloneFormAsync, isPending };
+};
+
+export const useArchiveForm = () => {
+  const utils = trpc.useUtils();
+  const { mutateAsync: archiveFormAsync, isPending } = trpc.form.archiveForm.useMutation({
+    onSuccess: async () => {
+      await utils.form.listForms.invalidate();
+    },
+  });
+  return { archiveFormAsync, isPending };
+};
+
+export const useRestoreForm = () => {
+  const utils = trpc.useUtils();
+  const { mutateAsync: restoreFormAsync, isPending } = trpc.form.restoreForm.useMutation({
+    onSuccess: async () => {
+      await utils.form.listForms.invalidate();
+    },
+  });
+  return { restoreFormAsync, isPending };
+};

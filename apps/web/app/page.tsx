@@ -6,16 +6,16 @@ import { useUser } from "~/hooks/api/auth";
 import FormFlowLanding from "~/components/form-flow-landing";
 
 export default function Home() {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, isFetching } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && user?.id) {
+    if (!isLoading && !isFetching && user?.id) {
       router.replace("/dashboard");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, isFetching, router]);
 
-  if (isLoading) return null;
+  if (isLoading || isFetching) return null;
   if (user?.id) return null;
 
   return <FormFlowLanding />;

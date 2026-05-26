@@ -9,17 +9,29 @@ export const formFieldEnum = z.enum([
 export const formStatusEnum = z.enum(["draft", "published", "unpublished"]);
 export const formVisibilityEnum = z.enum(["public", "unlisted"]);
 
+/* CONDITION SCHEMA */
+
+export const conditionSchema = z.object({
+  fieldId: z.string().uuid(),
+  operator: z.enum(["equals", "not_equals", "contains", "is_empty", "is_not_empty"]),
+  value: z.string(),
+});
+export type FieldCondition = z.infer<typeof conditionSchema>;
+
 /* COMMON FIELD SCHEMA */
 
 export const formFieldObject = z.object({
   id: z.string().uuid().describe("Field unique ID"),
   label: z.string().describe("Label of the form field"),
+  labelKey: z.string().optional().describe("Slug key derived from label"),
   type: formFieldEnum,
   description: z.string().nullable().optional().describe("Helper text for the field"),
   placeholder: z.string().nullable().optional().describe("Placeholder for the field"),
   isRequired: z.boolean().default(false).describe("Whether the field is required"),
   index: z.string().optional().describe("Ordering index of the field"),
   options: z.array(z.string()).nullable().optional().describe("Options for SELECT/CHECKBOX fields"),
+  page: z.number().int().min(1).optional().describe("Page number this field belongs to"),
+  conditions: z.array(conditionSchema).nullable().optional().describe("Conditional visibility rules"),
 });
 
 /* CREATE FORM */
@@ -41,6 +53,9 @@ export const updateFormInputModel = z.object({
   title: z.string().min(1).max(20).optional().describe("Updated title"),
   description: z.string().max(300).optional().describe("Updated description"),
   visibility: formVisibilityEnum.optional().describe("Updated visibility"),
+  expiresAt: z.date().nullable().optional().describe("Form expiry date"),
+  maxResponses: z.number().int().positive().nullable().optional().describe("Max response limit"),
+  slug: z.string().min(3).max(100).regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens").nullable().optional().describe("Custom URL slug"),
 });
 
 export const updateFormOutputModel = z.object({
@@ -92,6 +107,7 @@ export const listFormsOutputModel = z.array(
     description: z.string().nullable().describe("Form description"),
     status: formStatusEnum.describe("Form publish status"),
     visibility: formVisibilityEnum.describe("Form visibility mode"),
+    isArchived: z.boolean().describe("Whether the form is archived"),
     createdAt: z.date().nullable().describe("Creation timestamp"),
     updatedAt: z.date().nullable().optional().describe("Last update timestamp"),
   }),
@@ -121,6 +137,10 @@ export const getFormForDashboardOutputModel = z.object({
   description: z.string().nullable().optional(),
   status: formStatusEnum,
   visibility: formVisibilityEnum,
+  expiresAt: z.date().nullable().optional(),
+  maxResponses: z.number().int().nullable().optional(),
+  slug: z.string().nullable().optional(),
+  isArchived: z.boolean(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable().optional(),
 });
@@ -138,6 +158,7 @@ export const getFormByIdOutputModel = z
     description: z.string().nullable(),
     status: formStatusEnum,
     visibility: formVisibilityEnum,
+    expiresAt: z.date().nullable().optional(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable().optional(),
     fields: z.array(formFieldObject),
@@ -154,6 +175,8 @@ export const createFieldInputModel = z.object({
   placeholder: z.string().optional().describe("Placeholder for the field"),
   isRequired: z.boolean().default(false).describe("Whether the field is mandatory"),
   options: z.array(z.string()).optional().describe("Options for SELECT/CHECKBOX fields"),
+  page: z.number().int().min(1).default(1).optional().describe("Page number for multi-page forms"),
+  conditions: z.array(conditionSchema).nullable().optional().describe("Conditional visibility rules"),
 });
 
 export const createFieldOutputModel = formFieldObject;
@@ -166,6 +189,8 @@ export const updateFieldInputModel = z.object({
   placeholder: z.string().optional().describe("Updated placeholder"),
   isRequired: z.boolean().optional().describe("Whether field is mandatory"),
   options: z.array(z.string()).optional().describe("Options for SELECT/CHECKBOX fields"),
+  page: z.number().int().min(1).optional().describe("Page number for multi-page forms"),
+  conditions: z.array(conditionSchema).nullable().optional().describe("Conditional visibility rules"),
 });
 
 export const updateFieldOutputModel = formFieldObject;
@@ -219,6 +244,35 @@ export const getFormSubmissionsOutputModel = z.array(
     createdAt: z.date().describe("Submission timestamp"),
   }),
 );
+
+/* CLONE FORM */
+
+export const cloneFormInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID to clone"),
+});
+
+export const cloneFormOutputModel = z.object({
+  id: z.string().uuid(),
+  createdAt: z.string(),
+});
+
+/* ARCHIVE / RESTORE FORM */
+
+export const archiveFormInputModel = z.object({
+  formId: z.string().uuid().describe("Form ID"),
+});
+
+export const archiveFormOutputModel = z.object({
+  success: z.boolean(),
+});
+
+/* GET FORM BY SLUG (public) */
+
+export const getFormBySlugInputModel = z.object({
+  slug: z.string().describe("Custom URL slug"),
+});
+
+export const getFormBySlugOutputModel = getFormByIdOutputModel;
 
 /* Legacy aliases kept for backward compat */
 export const getFieldInputModel = getFieldsInputModel;

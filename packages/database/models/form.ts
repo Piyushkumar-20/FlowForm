@@ -1,5 +1,5 @@
 
-import { pgTable, uuid, varchar, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, timestamp, pgEnum, integer, boolean } from "drizzle-orm/pg-core";
 import { usersTable } from "./user";
 
 export const formStatusEnum = pgEnum("form_status", ["draft", "published", "unpublished"]);
@@ -13,6 +13,10 @@ export const formsTable = pgTable("forms", {
 
   status: formStatusEnum("status").default("draft").notNull(),
   visibility: formVisibilityEnum("visibility").default("public").notNull(),
+  expiresAt: timestamp("expires_at"),
+  maxResponses: integer("max_responses"),
+  isArchived: boolean("is_archived").default(false).notNull(),
+  slug: varchar("slug", { length: 100 }).unique(),
 
   createdBy: uuid("created_by").references(() => usersTable.id),
   createdAt: timestamp("created_at").defaultNow(),

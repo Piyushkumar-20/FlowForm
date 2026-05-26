@@ -31,9 +31,9 @@ export function getCookieFactory(req: Request) {
         return req.cookies?.[name];
     }
 }
-export function clearCookieFactory(req: Request) {
+export function clearCookieFactory(res: Response) {
     return function clearCookie(name: string) {
-        return req.cookies?.[name];
+        res.clearCookie(name, { path: "/" });
     }
 }
 

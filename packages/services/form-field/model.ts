@@ -4,6 +4,13 @@ export const formFieldEnum = z.enum([
   "TEXT", "YES_NO", "NUMBER", "EMAIL", "PASSWORD", "SELECT", "CHECKBOX", "RATING", "DATE",
 ]);
 
+export const conditionSchema = z.object({
+  fieldId: z.string().uuid(),
+  operator: z.enum(["equals", "not_equals", "contains", "is_empty", "is_not_empty"]),
+  value: z.string(),
+});
+export type FieldCondition = z.infer<typeof conditionSchema>;
+
 export const createFieldInput = z.object({
   label: z.string().max(100).describe("Label of the form field"),
   type: formFieldEnum.describe("Field type"),
@@ -12,6 +19,8 @@ export const createFieldInput = z.object({
   placeholder: z.string().optional().describe("Placeholder for the field"),
   isRequired: z.boolean().default(false).describe("Whether the field is mandatory"),
   options: z.array(z.string()).optional().describe("Options for SELECT/CHECKBOX fields"),
+  page: z.number().int().min(1).default(1).optional(),
+  conditions: z.array(conditionSchema).nullable().optional(),
 });
 export type CreateFieldInputType = z.infer<typeof createFieldInput>;
 
@@ -23,6 +32,8 @@ export const updateFieldInput = z.object({
   placeholder: z.string().optional().describe("Updated placeholder"),
   isRequired: z.boolean().optional().describe("Whether field is mandatory"),
   options: z.array(z.string()).optional().describe("Options for SELECT/CHECKBOX fields"),
+  page: z.number().int().min(1).optional(),
+  conditions: z.array(conditionSchema).nullable().optional(),
 });
 export type UpdateFieldInputType = z.infer<typeof updateFieldInput>;
 

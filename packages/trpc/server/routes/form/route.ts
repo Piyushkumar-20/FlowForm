@@ -29,6 +29,12 @@ import {
   submitFormOutputModel,
   getFormSubmissionsInputModel,
   getFormSubmissionsOutputModel,
+  cloneFormInputModel,
+  cloneFormOutputModel,
+  archiveFormInputModel,
+  archiveFormOutputModel,
+  getFormBySlugInputModel,
+  getFormBySlugOutputModel,
 } from "./model";
 import { generatePath } from "../../utils/path-generator";
 import { z } from "zod";
@@ -169,5 +175,41 @@ export const formRouter = router({
     .output(getFormSubmissionsOutputModel)
     .query(async ({ input }) => {
       return formSubmissionService.getFormSubmissions({ formId: input.formId });
+    }),
+
+  /* ── CLONE / ARCHIVE ────────────────────────────────────────────────── */
+
+  cloneForm: authenticateProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/cloneForm"), tags: TAGS, protect: true } })
+    .input(cloneFormInputModel)
+    .output(cloneFormOutputModel)
+    .mutation(async ({ ctx, input }) => {
+      return formService.cloneForm({ formId: input.formId }, ctx.user.id);
+    }),
+
+  archiveForm: authenticateProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/archiveForm"), tags: TAGS, protect: true } })
+    .input(archiveFormInputModel)
+    .output(archiveFormOutputModel)
+    .mutation(async ({ input }) => {
+      return formService.archiveForm({ formId: input.formId });
+    }),
+
+  restoreForm: authenticateProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/restoreForm"), tags: TAGS, protect: true } })
+    .input(archiveFormInputModel)
+    .output(archiveFormOutputModel)
+    .mutation(async ({ input }) => {
+      return formService.restoreForm({ formId: input.formId });
+    }),
+
+  /* ── SLUG-BASED ACCESS ──────────────────────────────────────────────── */
+
+  getFormBySlug: publicProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/getFormBySlug"), tags: TAGS } })
+    .input(getFormBySlugInputModel)
+    .output(getFormBySlugOutputModel)
+    .query(async ({ input }) => {
+      return formService.getFormBySlug(input.slug);
     }),
 });

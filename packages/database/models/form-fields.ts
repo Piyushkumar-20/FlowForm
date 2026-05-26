@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, boolean, text, numeric, pgEnum, unique, json } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, timestamp, boolean, text, numeric, pgEnum, unique, json, integer } from "drizzle-orm/pg-core";
 import { formsTable } from "./form";
 
 export const formFieldEnum = pgEnum("field_type_enum", [
@@ -17,6 +17,8 @@ export const formFieldTable = pgTable("form_field", {
 
   type: formFieldEnum("type").notNull(),
   options: json("options").$type<string[]>(),
+  page: integer("page").default(1).notNull(),
+  conditions: json("conditions").$type<{ fieldId: string; operator: "equals" | "not_equals" | "contains" | "is_empty" | "is_not_empty"; value: string }[]>(),
 
   formId: uuid("form_id").references(() => formsTable.id),
 

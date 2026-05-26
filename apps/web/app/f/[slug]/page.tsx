@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { CheckIcon } from "lucide-react";
 
 import { PublicFormRenderer } from "~/components/public-form-renderer";
-import { useGetForm } from "~/hooks/api/form";
+import { useGetFormBySlug } from "~/hooks/api/form";
 
-export default function PublicFormPage({ params }: { params: Promise<{ form_id: string }> }) {
-  const { form_id: formId } = React.use(params);
-  const { form, isLoading, error } = useGetForm(formId);
+export default function SlugFormPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = React.use(params);
+  const { form, isLoading, error } = useGetFormBySlug(slug);
 
   const fields = form?.fields ?? [];
   const isExpired = form?.expiresAt ? new Date() > new Date(form.expiresAt) : false;
@@ -41,10 +42,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ form_id: 
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">
                 <span
                   className="inline-block size-[5px] rounded-full"
-                  style={{
-                    background: "#1d9e75",
-                    boxShadow: "0 0 6px rgba(29,158,117,0.7)",
-                  }}
+                  style={{ background: "#1d9e75", boxShadow: "0 0 6px rgba(29,158,117,0.7)" }}
                 />
                 Public form
               </span>

@@ -52,6 +52,7 @@ const addFieldSchema = z.object({
   description: z.string().trim().max(300, "Description must be at most 300 characters").optional(),
   placeholder: z.string().trim().max(300, "Placeholder must be at most 300 characters").optional(),
   isRequired: z.boolean().default(false),
+  page: z.number().int().min(1).default(1),
 });
 
 type AddFieldInput = z.input<typeof addFieldSchema>;
@@ -63,6 +64,7 @@ const defaultValues: AddFieldValues = {
   description: "",
   placeholder: "",
   isRequired: false,
+  page: 1,
 };
 
 interface AddFieldModalProps {
@@ -118,6 +120,7 @@ export function AddFieldModal({ formId, open, onOpenChange, onFieldCreated }: Ad
         placeholder: values.placeholder?.trim() || undefined,
         isRequired: values.isRequired,
         options: needsOptions ? options : undefined,
+        page: values.page,
       });
 
       onFieldCreated?.(createdField);
@@ -270,6 +273,21 @@ export function AddFieldModal({ formId, open, onOpenChange, onFieldCreated }: Ad
                 {form.formState.errors.placeholder.message}
               </p>
             ) : null}
+          </div>
+
+          {/* Page */}
+          <div className="space-y-2">
+            <label htmlFor="page" className="text-sm font-medium">
+              Page
+              <span className="ml-1 font-normal text-muted-foreground">(for multi-page forms)</span>
+            </label>
+            <Input
+              id="page"
+              type="number"
+              min={1}
+              className="max-w-[100px]"
+              {...form.register("page", { valueAsNumber: true })}
+            />
           </div>
 
           {/* Required */}

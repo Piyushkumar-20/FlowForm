@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { userService } from "../../services";
 import type { TRPCContext } from "../../context";
 import { authenticateProcedure, publicProcedure, router } from "../../trpc";
@@ -9,9 +10,10 @@ import {
   signInUserWithEmailAndPasswordInputModel,
   signInUserWithEmailAndPasswordOutputModel,
   getLoggedInUserInputModel,
-  getLoggedInUserOutputModel
+  getLoggedInUserOutputModel,
+  logoutOutputModel,
 } from "./model";
-import { getAuthenticationCookie } from "../../utils/cookie"
+import { getAuthenticationCookie, clearAuthenticationoCookie } from "../../utils/cookie"
 
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");
@@ -61,6 +63,20 @@ export const authRouter = router({
         id
       };
     }), 
+
+  logout: authenticateProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/logout"),
+        tags: TAGS,
+      },
+    })
+    .output(logoutOutputModel)
+    .mutation(({ ctx }) => {
+      clearAuthenticationoCookie(ctx);
+      return { success: true };
+    }),
 
     getLoggedInUser: authenticateProcedure.meta({
       openapi: {

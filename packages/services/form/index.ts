@@ -14,6 +14,10 @@ import {
   unpublishFormInput,
   type DeleteFormInputType,
   deleteFormInput,
+  type CloneFormInputType,
+  cloneFormInput,
+  type ArchiveFormInputType,
+  archiveFormInput,
 } from "./model";
 import { db, eq, asc, and } from "@repo/database";
 import { formsTable } from "@repo/database/models/form";
@@ -48,6 +52,7 @@ class FormService {
         description: formsTable.description,
         status: formsTable.status,
         visibility: formsTable.visibility,
+        isArchived: formsTable.isArchived,
         createdAt: formsTable.createdAt,
         updatedAt: formsTable.updatedAt,
       })
@@ -57,7 +62,14 @@ class FormService {
 
   public async getFormById(payload: GetFormByIdInputType) {
     const { formId } = await getFormByIdInput.parseAsync(payload);
+    return this._fetchPublicForm(eq(formsTable.id, formId));
+  }
 
+  public async getFormBySlug(slug: string) {
+    return this._fetchPublicForm(eq(formsTable.slug, slug));
+  }
+
+  private async _fetchPublicForm(whereClause: Parameters<typeof db.select>[0] extends never ? never : any) {
     const rows = await db
       .select({
         id: formsTable.id,
@@ -65,6 +77,8 @@ class FormService {
         description: formsTable.description,
         status: formsTable.status,
         visibility: formsTable.visibility,
+        expiresAt: formsTable.expiresAt,
+        isArchived: formsTable.isArchived,
         createdAt: formsTable.createdAt,
         createdBy: formsTable.createdBy,
         updatedAt: formsTable.updatedAt,
@@ -78,24 +92,26 @@ class FormService {
           isRequired: formFieldTable.isRequired,
           index: formFieldTable.index,
           options: formFieldTable.options,
+          page: formFieldTable.page,
+          conditions: formFieldTable.conditions,
         },
       })
       .from(formsTable)
       .leftJoin(formFieldTable, eq(formFieldTable.formId, formsTable.id))
-      .where(eq(formsTable.id, formId))
+      .where(whereClause)
       .orderBy(asc(formFieldTable.index));
 
     if (rows.length === 0) throw new Error("Form not found");
 
-    const { id, title, description, status, visibility, createdAt, updatedAt } = rows[0]!;
+    const { id, title, description, status, visibility, expiresAt, isArchived, createdAt, updatedAt } = rows[0]!;
 
-    if (status !== "published") throw new Error("Form not found");
+    if (status !== "published" || isArchived) throw new Error("Form not found");
 
     const fields = rows
       .filter((r): r is typeof r & { field: NonNullable<typeof r.field> } => r.field?.id != null)
       .map((r) => r.field as NonNullable<typeof r.field>);
 
-    return { id, title, description, status, visibility, createdAt, updatedAt, fields };
+    return { id, title, description, status, visibility, expiresAt, createdAt, updatedAt, fields };
   }
 
   public async getFormForDashboard(payload: GetFormByIdInputType) {
@@ -108,6 +124,10 @@ class FormService {
         description: formsTable.description,
         status: formsTable.status,
         visibility: formsTable.visibility,
+        expiresAt: formsTable.expiresAt,
+        maxResponses: formsTable.maxResponses,
+        slug: formsTable.slug,
+        isArchived: formsTable.isArchived,
         createdAt: formsTable.createdAt,
         updatedAt: formsTable.updatedAt,
       })
@@ -125,6 +145,9 @@ class FormService {
     if (updates.title !== undefined) patch.title = updates.title;
     if ("description" in updates) patch.description = updates.description ?? null;
     if (updates.visibility !== undefined) patch.visibility = updates.visibility;
+    if ("expiresAt" in updates) patch.expiresAt = updates.expiresAt ?? null;
+    if ("maxResponses" in updates) patch.maxResponses = updates.maxResponses ?? null;
+    if ("slug" in updates) patch.slug = updates.slug ?? null;
 
     if (Object.keys(patch).length === 0) throw new Error("No fields to update");
 
@@ -174,7 +197,6 @@ class FormService {
   public async deleteForm(payload: DeleteFormInputType) {
     const { formId } = await deleteFormInput.parseAsync(payload);
 
-    // Delete fields first (no cascade on form_field FK)
     await db.delete(formFieldTable).where(eq(formFieldTable.formId, formId));
 
     const result = await db
@@ -184,6 +206,84 @@ class FormService {
 
     if (!result || result.length === 0) throw new Error("Form not found");
     return { success: true, message: "Form deleted successfully" };
+  }
+
+  public async cloneForm(payload: CloneFormInputType, userId: string) {
+    const { formId } = await cloneFormInput.parseAsync(payload);
+
+    const [original] = await db.select().from(formsTable).where(eq(formsTable.id, formId));
+    if (!original) throw new Error("Form not found");
+
+    const rawTitle = (original.title ?? "Untitled") + " copy";
+    const newTitle = rawTitle.slice(0, 20);
+
+    const [newForm] = await db
+      .insert(formsTable)
+      .values({
+        title: newTitle,
+        description: original.description,
+        visibility: original.visibility,
+        status: "draft",
+        createdBy: userId,
+      })
+      .returning({ id: formsTable.id, createdAt: formsTable.createdAt });
+
+    if (!newForm) throw new Error("Failed to clone form");
+
+    const originalFields = await db
+      .select()
+      .from(formFieldTable)
+      .where(eq(formFieldTable.formId, formId))
+      .orderBy(asc(formFieldTable.index));
+
+    if (originalFields.length > 0) {
+      await db.insert(formFieldTable).values(
+        originalFields.map((f) => ({
+          label: f.label,
+          labelKey: f.labelKey,
+          type: f.type,
+          description: f.description,
+          placeholder: f.placeholder,
+          isRequired: f.isRequired,
+          index: f.index,
+          options: f.options,
+          page: f.page,
+          conditions: null, // conditions reference old field IDs — don't copy
+          formId: newForm.id,
+        })),
+      );
+    }
+
+    return {
+      id: newForm.id,
+      createdAt: newForm.createdAt ? newForm.createdAt.toISOString() : new Date().toISOString(),
+    };
+  }
+
+  public async archiveForm(payload: ArchiveFormInputType) {
+    const { formId } = await archiveFormInput.parseAsync(payload);
+
+    const result = await db
+      .update(formsTable)
+      .set({ isArchived: true })
+      .where(eq(formsTable.id, formId))
+      .returning({ id: formsTable.id });
+
+    if (!result[0]) throw new Error("Form not found");
+    return { success: true };
+  }
+
+  public async restoreForm(payload: ArchiveFormInputType) {
+    const { formId } = await archiveFormInput.parseAsync(payload);
+
+    const result = await db
+      .update(formsTable)
+      .set({ isArchived: false })
+      .where(eq(formsTable.id, formId))
+      .returning({ id: formsTable.id });
+
+    if (!result[0]) throw new Error("Form not found");
+    return { success: true };
   }
 
   public async getPublicForms() {
@@ -196,7 +296,13 @@ class FormService {
         updatedAt: formsTable.updatedAt,
       })
       .from(formsTable)
-      .where(and(eq(formsTable.status, "published"), eq(formsTable.visibility, "public")));
+      .where(
+        and(
+          eq(formsTable.status, "published"),
+          eq(formsTable.visibility, "public"),
+          eq(formsTable.isArchived, false),
+        ),
+      );
   }
 }
 

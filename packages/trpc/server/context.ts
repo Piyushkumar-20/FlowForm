@@ -20,7 +20,7 @@ export async function createContext({ req, res }: CreateExpressContextOptions): 
         req,
         createCookie: createCookieFactory(res),
         getCookie: getCookieFactory(req),
-        clearCookie: clearCookieFactory(req),
+        clearCookie: clearCookieFactory(res),
         user: undefined
     };
     return ctx;

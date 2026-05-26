@@ -28,8 +28,17 @@ export const updateFormInput = z.object({
   title: z.string().min(1).max(20).optional(),
   description: z.string().max(300).optional(),
   visibility: z.enum(["public", "unlisted"]).optional(),
+  expiresAt: z.date().nullable().optional(),
+  maxResponses: z.number().int().positive().nullable().optional(),
+  slug: z.string().min(3).max(100).regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens").nullable().optional(),
 });
 export type UpdateFormInputType = z.infer<typeof updateFormInput>;
+
+export const cloneFormInput = z.object({ formId: z.string().uuid() });
+export type CloneFormInputType = z.infer<typeof cloneFormInput>;
+
+export const archiveFormInput = z.object({ formId: z.string().uuid() });
+export type ArchiveFormInputType = z.infer<typeof archiveFormInput>;
 
 export const publishFormInput = z.object({
   formId: z.string().uuid(),
