@@ -1,57 +1,73 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { SubmitHandler, useForm } from "react-hook-form"
-import { Button } from "~/components/ui/button"
+import * as React from "react";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
+
+import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog"
+} from "~/components/ui/dialog";
 import {
   Field,
+  FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
-} from "~/components/ui/field"
-import { Input } from "~/components/ui/input"
-import { Textarea } from "~/components/ui/textarea"
-import { useCreateForm } from "~/hooks/api/form"
+} from "~/components/ui/field";
+import { Input } from "~/components/ui/input";
+import { Textarea } from "~/components/ui/textarea";
+import { useCreateForm } from "~/hooks/api/form";
 
-export type CreateFormValues = {
-  title: string
-  description?: string
-}
+/* Zod schema — title required, description optional (empty string allowed). */
+const createFormSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(20, "Title must be at most 20 characters"),
+  description: z
+    .string()
+    .max(300, "Description must be at most 300 characters"),
+});
 
 interface CreateFormModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function CreateFormModal({ open, onOpenChange }: CreateFormModalProps) {
-  const { CreateFormAsync } = useCreateForm()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const form = useForm<CreateFormValues>({
+  const { CreateFormAsync } = useCreateForm();
+
+  const form = useForm({
     defaultValues: {
       title: "",
       description: "",
     },
-  })
-
-  const onSubmit: SubmitHandler<CreateFormValues> = async (values) => {
-    try {
-      setIsSubmitting(true)
+    // Form-level Zod validator — runs on every change.
+    validators: {
+      onChange: createFormSchema,
+    },
+    onSubmit: async ({ value }) => {
       await CreateFormAsync({
-        title: values.title,
-        description: values.description || undefined,
-      })
-      form.reset()
-      onOpenChange(false)
-    } finally {
-      setIsSubmitting(false)
+        title: value.title.trim(),
+        description: value.description?.trim() || undefined,
+      });
+      form.reset();
+      onOpenChange(false);
+    },
+  });
+
+  // Clear field state whenever the dialog is dismissed.
+  React.useEffect(() => {
+    if (!open) {
+      form.reset();
     }
-  }
+  }, [open, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -62,48 +78,86 @@ export function CreateFormModal({ open, onOpenChange }: CreateFormModalProps) {
             Create a new form to start collecting responses
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void form.handleSubmit();
+          }}
+          className="space-y-4"
+          noValidate
+        >
           <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="title">Form Title</FieldLabel>
-              <Input
-                id="title"
-                placeholder="Enter form title"
-                autoComplete="off"
-                {...form.register("title", {
-                  required: "Title is required",
-                  maxLength: {
-                    value: 20,
-                    message: "Title must be at most 20 characters",
-                  },
-                })}
-              />
-              {form.formState.errors.title && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.title.message}
-                </p>
-              )}
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea
-                id="description"
-                placeholder="Enter form description (optional)"
-                className="min-h-24"
-                {...form.register("description", {
-                  maxLength: {
-                    value: 300,
-                    message: "Description must be at most 300 characters",
-                  },
-                })}
-              />
-              {form.formState.errors.description && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.description.message}
-                </p>
-              )}
-            </Field>
-            <div className="flex gap-2 justify-end pt-4">
+            {/* Title */}
+            <form.Field name="title">
+              {(field) => {
+                const hasError =
+                  field.state.meta.isTouched && field.state.meta.errors.length > 0;
+                return (
+                  <Field data-invalid={hasError || undefined}>
+                    <FieldLabel htmlFor={field.name}>Form Title</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      placeholder="Enter form title"
+                      autoComplete="off"
+                      aria-invalid={hasError || undefined}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                    />
+                    {hasError ? (
+                      <FieldError
+                        errors={
+                          field.state.meta.errors as Array<
+                            { message?: string } | undefined
+                          >
+                        }
+                      />
+                    ) : null}
+                  </Field>
+                );
+              }}
+            </form.Field>
+
+            {/* Description */}
+            <form.Field name="description">
+              {(field) => {
+                const hasError =
+                  field.state.meta.isTouched && field.state.meta.errors.length > 0;
+                return (
+                  <Field data-invalid={hasError || undefined}>
+                    <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                    <Textarea
+                      id={field.name}
+                      name={field.name}
+                      placeholder="Enter form description (optional)"
+                      className="min-h-24"
+                      aria-invalid={hasError || undefined}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                    />
+                    <FieldDescription>
+                      Optional · up to 300 characters
+                    </FieldDescription>
+                    {hasError ? (
+                      <FieldError
+                        errors={
+                          field.state.meta.errors as Array<
+                            { message?: string } | undefined
+                          >
+                        }
+                      />
+                    ) : null}
+                  </Field>
+                );
+              }}
+            </form.Field>
+
+            {/* Actions — subscribe to form state for submit button */}
+            <div className="flex justify-end gap-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -111,13 +165,22 @@ export function CreateFormModal({ open, onOpenChange }: CreateFormModalProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Form"}
-              </Button>
+              <form.Subscribe
+                selector={(state) => ({
+                  canSubmit: state.canSubmit,
+                  isSubmitting: state.isSubmitting,
+                })}
+              >
+                {({ canSubmit, isSubmitting }) => (
+                  <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                    {isSubmitting ? "Creating..." : "Create Form"}
+                  </Button>
+                )}
+              </form.Subscribe>
             </div>
           </FieldGroup>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

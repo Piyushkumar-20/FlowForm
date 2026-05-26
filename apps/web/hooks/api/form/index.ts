@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 import { trpc } from "~/trpc/client";
 import type { RouterOutputs } from "../../../../../packages/trpc/client/index";
 
@@ -17,59 +18,82 @@ export const useCreateForm = () => {
     },
   });
 
-  return {
-    CreateFormAsync,
-    CreateForm,
-    error,
-    failureCount,
-    isError,
-    isIdle,
-  };
+  return { CreateFormAsync, CreateForm, error, failureCount, isError, isIdle };
 };
 
 type Form = RouterOutputs["form"]["listForms"][number];
 export type Field = RouterOutputs["form"]["getFields"][number];
 
 export const useListForms = () => {
-  const {
-    data: forms,
-    error,
-    failureCount,
-    isError,
-    isFetching,
-    isLoading,
-  } = trpc.form.listForms.useQuery();
+  const { data, error, failureCount, isError, isFetching, isLoading } =
+    trpc.form.listForms.useQuery();
 
-  return {
-    forms: (forms ?? []) as Form[],
-    error,
-    failureCount,
-    isError,
-    isFetching,
-    isLoading,
-  };
+  // Memoize the fallback so the reference is stable across renders.
+  const forms = useMemo(() => (data ?? []) as Form[], [data]);
+
+  return { forms, error, failureCount, isError, isFetching, isLoading };
+};
+
+export const useGetFormForDashboard = (formId: string) => {
+  const { data: form, isLoading, isFetching, error, refetch } =
+    trpc.form.getFormForDashboard.useQuery({ formId }, { enabled: Boolean(formId) });
+
+  return { form, isLoading, isFetching, error, refetch };
+};
+
+export const usePublishForm = () => {
+  const utils = trpc.useUtils();
+  const { mutateAsync: publishFormAsync, isPending } = trpc.form.publishForm.useMutation({
+    onSuccess: async (_, variables) => {
+      await utils.form.getFormForDashboard.invalidate({ formId: variables.formId });
+      await utils.form.listForms.invalidate();
+    },
+  });
+  return { publishFormAsync, isPending };
+};
+
+export const useUnpublishForm = () => {
+  const utils = trpc.useUtils();
+  const { mutateAsync: unpublishFormAsync, isPending } = trpc.form.unpublishForm.useMutation({
+    onSuccess: async (_, variables) => {
+      await utils.form.getFormForDashboard.invalidate({ formId: variables.formId });
+      await utils.form.listForms.invalidate();
+    },
+  });
+  return { unpublishFormAsync, isPending };
+};
+
+export const useUpdateForm = () => {
+  const utils = trpc.useUtils();
+  const { mutateAsync: updateFormAsync, isPending } = trpc.form.updateForm.useMutation({
+    onSuccess: async (_, variables) => {
+      await utils.form.getFormForDashboard.invalidate({ formId: variables.formId });
+      await utils.form.listForms.invalidate();
+    },
+  });
+  return { updateFormAsync, isPending };
+};
+
+export const useDeleteForm = () => {
+  const utils = trpc.useUtils();
+  const { mutateAsync: deleteFormAsync, isPending } = trpc.form.deleteForm.useMutation({
+    onSuccess: async () => {
+      await utils.form.listForms.invalidate();
+    },
+  });
+  return { deleteFormAsync, isPending };
 };
 
 export const useGetFields = (formId: string) => {
-  const {
-    data: fields,
-    isFetched,
-    isFetching,
-    isLoading,
-    error,
-    refetch,
-    status,
-  } = trpc.form.getFields.useQuery({ formId }, { enabled: Boolean(formId) });
+  const { data, isFetched, isFetching, isLoading, error, refetch, status } =
+    trpc.form.getFields.useQuery({ formId }, { enabled: Boolean(formId) });
 
-  return {
-    fields: fields ?? [],
-    error,
-    isFetching,
-    isLoading,
-    status,
-    isFetched,
-    refetch,
-  };
+  // CRITICAL: memoize so we don't return a fresh `[]` on every render.
+  // Without this, any useEffect with `fields` in its deps loops infinitely
+  // while the query is loading.
+  const fields = useMemo(() => data ?? [], [data]);
+
+  return { fields, error, isFetching, isLoading, status, isFetched, refetch };
 };
 
 export const useCreateField = (formId: string) => {
@@ -84,18 +108,11 @@ export const useCreateField = (formId: string) => {
     status,
   } = trpc.form.createField.useMutation({
     onSuccess: (createdField, variables) => {
-      if (variables.formId !== formId) {
-        return;
-      }
+      if (variables.formId !== formId) return;
 
       utils.form.getFields.setData({ formId }, (fields) => {
         const currentFields = fields ?? [];
-        const fieldAlreadyRendered = currentFields.some((field) => field.id === createdField.id);
-
-        if (fieldAlreadyRendered) {
-          return currentFields;
-        }
-
+        if (currentFields.some((field) => field.id === createdField.id)) return currentFields;
         return [...currentFields, createdField as Field];
       });
 
@@ -104,15 +121,7 @@ export const useCreateField = (formId: string) => {
     },
   });
 
-  return {
-    CreateFieldAsync,
-    CreateField,
-    failureCount,
-    error,
-    isIdle,
-    isSuccess,
-    status,
-  };
+  return { CreateFieldAsync, CreateField, failureCount, error, isIdle, isSuccess, status };
 };
 
 export const useUpdateField = (formId: string) => {
@@ -131,15 +140,7 @@ export const useUpdateField = (formId: string) => {
     },
   });
 
-  return {
-    UpdateFieldAsync,
-    UpdateField,
-    failureCount,
-    error,
-    isIdle,
-    isSuccess,
-    status,
-  };
+  return { UpdateFieldAsync, UpdateField, failureCount, error, isIdle, isSuccess, status };
 };
 
 export const useDeleteField = (formId: string) => {
@@ -158,33 +159,16 @@ export const useDeleteField = (formId: string) => {
     },
   });
 
-  return {
-    deleteFieldAsync,
-    deleteField,
-    failureCount,
-    error,
-    isIdle,
-    isSuccess,
-    status,
-  };
+  return { deleteFieldAsync, deleteField, failureCount, error, isIdle, isSuccess, status };
 };
 
 export const useGetFormSubmissions = (formId: string) => {
-  const {
-    data: submissions,
-    isLoading,
-    isFetching,
-    error,
-    refetch,
-  } = trpc.form.getFormSubmissions.useQuery({ formId }, { enabled: Boolean(formId) });
+  const { data, isLoading, isFetching, error, refetch } =
+    trpc.form.getFormSubmissions.useQuery({ formId }, { enabled: Boolean(formId) });
 
-  return {
-    submissions: submissions ?? [],
-    isLoading,
-    isFetching,
-    error,
-    refetch,
-  };
+  const submissions = useMemo(() => data ?? [], [data]);
+
+  return { submissions, isLoading, isFetching, error, refetch };
 };
 
 export const useSubmitForm = () => {
@@ -201,24 +185,8 @@ export const useSubmitForm = () => {
 };
 
 export const useGetForm = (formId: string) => {
-  const {
-    data: form,
-    isFetched,
-    isFetching,
-    isLoading,
-    error,
-    refetch,
-    status,
-  } = trpc.form.getForm.useQuery({ formId }, { enabled: Boolean(formId) });
+  const { data: form, isFetched, isFetching, isLoading, error, refetch, status } =
+    trpc.form.getForm.useQuery({ formId }, { enabled: Boolean(formId) });
 
-  return {
-    form,
-    error,
-    isFetching,
-    isLoading,
-    status,
-    isFetched,
-    refetch,
-  };
+  return { form, error, isFetching, isLoading, status, isFetched, refetch };
 };
-

@@ -1,14 +1,16 @@
 import { httpLink, httpBatchStreamLink } from "@repo/trpc/client";
-import { env } from "~/env.js";
 
 interface CreateTRPCHttpBatchClientClientOpts {
   enableStreaming?: boolean;
+  url?: string;
 }
 
 export const createTRPCHttpBatchClientClient = (opts?: CreateTRPCHttpBatchClientClientOpts) => {
   const c = opts?.enableStreaming ? httpBatchStreamLink : httpLink;
   return c({
-    url: env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/trpc",
+    // Browser: use relative path — Next.js rewrite proxies to the API (no CORS).
+    // Server-side callers pass an explicit absolute url.
+    url: opts?.url ?? "/trpc",
     fetch(url, options) {
       return fetch(url, {
         ...options,

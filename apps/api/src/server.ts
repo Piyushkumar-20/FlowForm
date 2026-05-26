@@ -21,7 +21,15 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 
   app.use(
     cors({
-      origin: "http://localhost:3000",
+      // Allow any localhost origin (covers port variations in dev) and no-origin
+      // requests from server-to-server proxies (e.g. Next.js rewrites).
+      origin: (origin, callback) => {
+        if (!origin || origin.startsWith("http://localhost")) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
       credentials: true,
     }),
   );
