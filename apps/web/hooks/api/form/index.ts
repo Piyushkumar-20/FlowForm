@@ -1,5 +1,6 @@
 "use client";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import { trpc } from "~/trpc/client";
 import type { RouterOutputs } from "../../../../../packages/trpc/client/index";
 
@@ -15,6 +16,10 @@ export const useCreateForm = () => {
   } = trpc.form.createForm.useMutation({
     onSuccess: async () => {
       await utils.form.invalidate();
+    },
+    onError: (err) => {
+      console.error("[useCreateForm] mutation failed:", err.message);
+      toast.error(err.message || "Failed to create form. Please try again.");
     },
   });
 

@@ -51,12 +51,19 @@ export const formRouter = router({
     .output(createFormOutputModel)
     .mutation(async ({ ctx, input }) => {
       const { title, description } = input;
-      const { id, createdAt } = await formService.createForm({
-        title,
-        description,
-        createdBy: ctx.user.id,
-      });
-      return { id, createdAt };
+      console.log("[createForm] session userId:", ctx.user.id, "| title:", title);
+      try {
+        const { id, createdAt } = await formService.createForm({
+          title,
+          description,
+          createdBy: ctx.user.id,
+        });
+        console.log("[createForm] success | formId:", id, "| userId:", ctx.user.id);
+        return { id, createdAt };
+      } catch (err) {
+        console.error("[createForm] DB error | userId:", ctx.user.id, "| error:", err);
+        throw err;
+      }
     }),
 
   updateForm: authenticateProcedure

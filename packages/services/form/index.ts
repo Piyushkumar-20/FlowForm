@@ -27,11 +27,14 @@ import { usersTable } from "@repo/database/models/user";
 class FormService {
   public async createForm(payload: CreateFormInputType): Promise<CreateFormOutputType> {
     const { title, description, createdBy } = await createFormInput.parseAsync(payload);
+    console.log("[FormService.createForm] inserting | createdBy:", createdBy, "| title:", title);
 
     const result = await db
       .insert(formsTable)
       .values({ title, description: description ?? null, createdBy })
       .returning({ id: formsTable.id, createdAt: formsTable.createdAt });
+
+    console.log("[FormService.createForm] DB result:", JSON.stringify(result));
 
     if (!result || result.length === 0 || !result[0]?.id) {
       throw new Error("Something went wrong creating form");

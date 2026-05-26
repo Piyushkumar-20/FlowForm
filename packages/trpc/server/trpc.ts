@@ -28,14 +28,17 @@ export const authenticateProcedure = tRPCContext.procedure.use(async options => 
   if (!userToken) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "User not logged in" });
   }
-  const { id } = await userService.verifyAndDecodeUserToken(userToken);
-
-  return options.next({
-    ctx : {
-      ...ctx,
-      user: {id}
-    }
-  })
+  try {
+    const { id } = await userService.verifyAndDecodeUserToken(userToken);
+    return options.next({
+      ctx : {
+        ...ctx,
+        user: {id}
+      }
+    })
+  } catch {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Session expired or invalid. Please log in again." });
+  }
 })
 
 export const adminProcedure = authenticateProcedure.use(async options => {

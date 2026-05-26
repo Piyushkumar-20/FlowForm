@@ -459,7 +459,8 @@ const ALL_FORMS: FormDef[] = [
 
 /* ─────────────────────────────────────────────────────────── cleanup ── */
 
-async function clearDemoData() {
+async function clearDemoForms() {
+  // Look up existing demo users by email to get their current UUIDs
   const existingUsers = await db
     .select({ id: usersTable.id })
     .from(usersTable)
@@ -481,9 +482,8 @@ async function clearDemoData() {
 
   // form_submission has onDelete: cascade from formsTable, so deleting forms removes submissions
   await db.delete(formsTable).where(inArray(formsTable.createdBy, userIds));
-  await db.delete(usersTable).where(inArray(usersTable.email, DEMO_EMAILS));
 
-  console.log(`  ✓ cleared ${existingForms.length} demo forms and ${existingUsers.length} demo users`);
+  console.log(`  ✓ cleared ${existingForms.length} demo forms (users preserved)`);
 }
 
 /* ─────────────────────────────────────────────────────────── seeding ── */
@@ -492,26 +492,51 @@ async function seedUsers() {
   const adminSalt = makeSalt();
   const demoSalt  = makeSalt();
 
-  const [admin, demo] = await db
+  // Upsert admin: if the user already exists keep their UUID so any active
+  // JWT remains valid. Only the password/salt are refreshed.
+  const [admin] = await db
     .insert(usersTable)
-    .values([
-      {
+    .values({
+      fullName: "Admin User",
+      email:    "admin@formflow.dev",
+      salt:     adminSalt,
+      password: hashPassword(adminSalt, "Admin@123"),
+      role:     "ADMIN",
+      emailVerified: true,
+    })
+    .onConflictDoUpdate({
+      target: usersTable.email,
+      set: {
         fullName: "Admin User",
-        email:    "admin@formflow.dev",
         salt:     adminSalt,
         password: hashPassword(adminSalt, "Admin@123"),
         role:     "ADMIN",
         emailVerified: true,
       },
-      {
+    })
+    .returning({ id: usersTable.id, email: usersTable.email });
+
+  // Upsert demo user: same UUID-preserving strategy
+  const [demo] = await db
+    .insert(usersTable)
+    .values({
+      fullName: "Demo User",
+      email:    "demo@formflow.dev",
+      salt:     demoSalt,
+      password: hashPassword(demoSalt, "Demo@123"),
+      role:     "USER",
+      emailVerified: true,
+    })
+    .onConflictDoUpdate({
+      target: usersTable.email,
+      set: {
         fullName: "Demo User",
-        email:    "demo@formflow.dev",
         salt:     demoSalt,
         password: hashPassword(demoSalt, "Demo@123"),
         role:     "USER",
         emailVerified: true,
       },
-    ])
+    })
     .returning({ id: usersTable.id, email: usersTable.email });
 
   console.log(`  ✓ users: admin@formflow.dev (ADMIN), demo@formflow.dev (USER)`);
@@ -574,8 +599,8 @@ async function seedForms(ownerId: string) {
 async function main() {
   console.log("\n🌱 FlowForm seed script\n");
 
-  console.log("⟳  Clearing existing demo data...");
-  await clearDemoData();
+  console.log("⟳  Clearing existing demo forms...");
+  await clearDemoForms();
 
   console.log("\n⟳  Seeding users...");
   const { demoId } = await seedUsers();
