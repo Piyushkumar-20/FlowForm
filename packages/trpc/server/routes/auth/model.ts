@@ -30,4 +30,5 @@ export const getLoggedInUserOutputModel = z.object({
     fullName: z.string().describe("Name of the user"),
     email: z.string().describe("Email of the User"),
     profileImageUrl: z.string().nullable().optional().describe("Profile image of the User"),
+    role: z.enum(["USER", "ADMIN"]).describe("Role of the user"),
 })

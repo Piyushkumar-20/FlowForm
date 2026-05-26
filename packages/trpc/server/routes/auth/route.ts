@@ -95,9 +95,9 @@ export const authRouter = router({
       }
 
       try {
-        const { id, email, fullName, profileImageUrl } =
+        const { id, email, fullName, profileImageUrl, role } =
           await userService.verifyAndDecodeUserToken(userToken);
-        return { id, email, fullName, profileImageUrl };
+        return { id, email, fullName, profileImageUrl, role };
       } catch {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired token" });
       }

@@ -23,8 +23,9 @@ export const verifyAndDecodeUserTokenOutput = z.object({
     id: z.string(),
     email: z.string().email(),
     fullName: z.string(),
-    profileImageUrl: z.string().nullable()
+    profileImageUrl: z.string().nullable(),
+    role: z.enum(["USER", "ADMIN"]),
   })
-  
+
   export type VerifyAndDecodeUserTokenOutputType =
     z.infer<typeof verifyAndDecodeUserTokenOutput>

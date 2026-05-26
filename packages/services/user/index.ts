@@ -10,8 +10,10 @@ import {
 
 import * as JWT from "jsonwebtoken";
 import { createHmac, randomBytes } from "node:crypto";
-import { db, eq } from "@repo/database";
+import { db, eq, sql } from "@repo/database";
 import { usersTable } from "@repo/database/models/user";
+import { formsTable } from "@repo/database/models/form";
+import { formSubmissionTable } from "@repo/database/models/form-submission";
 import { env } from "../env";
 
 class UserService {
@@ -45,7 +47,8 @@ class UserService {
       id: usersTable.id,
       email: usersTable.email,
       fullName: usersTable.fullName,
-      profileImageUrl: usersTable.profileImageUrl
+      profileImageUrl: usersTable.profileImageUrl,
+      role: usersTable.role,
     }).from(usersTable).where(eq(usersTable.id, id));
 
     if (!userRecord) throw new Error('User does not exist');
@@ -117,7 +120,45 @@ class UserService {
       email: userInfo.email,
       fullName: userInfo.fullName,
       profileImageUrl: userInfo.profileImageUrl,
+      role: userInfo.role,
     };
+  }
+
+  public async getUserRoleById(id: string): Promise<"USER" | "ADMIN"> {
+    const [record] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, id));
+    if (!record) throw new Error('User does not exist');
+    return record.role;
+  }
+
+  public async getAdminStats(): Promise<{ totalUsers: number; totalForms: number; totalSubmissions: number }> {
+    const [userCount] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable);
+    const [formCount] = await db.select({ count: sql<number>`count(*)::int` }).from(formsTable);
+    const [submissionCount] = await db.select({ count: sql<number>`count(*)::int` }).from(formSubmissionTable);
+    return {
+      totalUsers: userCount?.count ?? 0,
+      totalForms: formCount?.count ?? 0,
+      totalSubmissions: submissionCount?.count ?? 0,
+    };
+  }
+
+  public async getRecentUsers(limit = 10) {
+    return db.select({
+      id: usersTable.id,
+      fullName: usersTable.fullName,
+      email: usersTable.email,
+      role: usersTable.role,
+      createdAt: usersTable.createdAt,
+    }).from(usersTable).orderBy(sql`${usersTable.createdAt} desc`).limit(limit);
+  }
+
+  public async getRecentForms(limit = 10) {
+    return db.select({
+      id: formsTable.id,
+      title: formsTable.title,
+      status: formsTable.status,
+      visibility: formsTable.visibility,
+      createdAt: formsTable.createdAt,
+    }).from(formsTable).orderBy(sql`${formsTable.createdAt} desc`).limit(limit);
   }
 }
 

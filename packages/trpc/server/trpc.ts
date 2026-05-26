@@ -37,3 +37,12 @@ export const authenticateProcedure = tRPCContext.procedure.use(async options => 
     }
   })
 })
+
+export const adminProcedure = authenticateProcedure.use(async options => {
+  const { ctx } = options;
+  const role = await userService.getUserRoleById(ctx.user.id);
+  if (role !== "ADMIN") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  }
+  return options.next({ ctx });
+})

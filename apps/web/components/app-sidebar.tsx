@@ -7,6 +7,7 @@ import {
   IconSettings,
   IconArticle,
   IconCompass,
+  IconShield,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "~/components/nav-documents"
@@ -22,46 +23,53 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "~/components/ui/sidebar"
+import { useUser } from "~/hooks/api/auth"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+const baseNavMain = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: IconDashboard,
   },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Forms",
-      url: "/dashboard/forms",
-      icon: IconArticle,
-    },
-    {
-      title: "Explore",
-      url: "/explore",
-      icon: IconCompass,
-    },
-  ],
-  navClouds: [
+  {
+    title: "Forms",
+    url: "/dashboard/forms",
+    icon: IconArticle,
+  },
+  {
+    title: "Explore",
+    url: "/explore",
+    icon: IconCompass,
+  },
+];
 
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-  ],
-  documents: [
+const adminNavItem = {
+  title: "Admin",
+  url: "/admin",
+  icon: IconShield,
+};
 
-  ],
-}
+const navSecondary = [
+  {
+    title: "Settings",
+    url: "#",
+    icon: IconSettings,
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useUser();
+
+  const navMain = user?.role === "ADMIN"
+    ? [...baseNavMain, adminNavItem]
+    : baseNavMain;
+
+  const sidebarUser = {
+    name: user?.fullName ?? "User",
+    email: user?.email ?? "",
+    avatar: user?.profileImageUrl ?? "",
+  };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -80,12 +88,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navMain} />
+        <NavDocuments items={[]} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={sidebarUser} />
       </SidebarFooter>
     </Sidebar>
   )

@@ -3,11 +3,13 @@ import {z} from "zod";
 import { healthRouter } from "./routes/health/route";
 import { authRouter } from "./routes/auth/route";
 import { formRouter } from "./routes/form/route";
+import { adminRouter } from "./routes/admin/route";
 
 export const serverRouter = router({
   health: healthRouter,
   auth: authRouter,
-  form: formRouter
+  form: formRouter,
+  admin: adminRouter,
 });
 
 export { createContext } from "./context";
