@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { Skeleton } from "~/components/ui/skeleton";
 import {
   useArchiveForm,
   useCloneForm,
@@ -276,12 +277,12 @@ function FormRow({ form }: FormRowProps) {
 /* ─────────────────────────────────────────────────────────────────── */
 
 interface FormsListTableProps {
+  forms: ReturnType<typeof useListForms>["forms"];
+  isLoading: boolean;
   onCreateForm?: () => void;
 }
 
-export function FormsListTable({ onCreateForm }: FormsListTableProps) {
-  const { forms, isLoading, isError, error } = useListForms();
-
+export function FormsListTable({ forms, isLoading, onCreateForm }: FormsListTableProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
       <Table>
@@ -297,17 +298,18 @@ export function FormsListTable({ onCreateForm }: FormsListTableProps) {
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={6} className="h-32 text-center text-sm text-muted-foreground">
-                Loading your forms…
-              </TableCell>
-            </TableRow>
-          ) : isError ? (
-            <TableRow>
-              <TableCell colSpan={6} className="h-32 text-center text-sm text-destructive">
-                {error instanceof Error ? error.message : "We could not load your forms."}
-              </TableCell>
-            </TableRow>
+            <>
+              {[1, 2, 3].map((i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-36" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20 rounded-md" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-16 rounded-md" /></TableCell>
+                  <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-10" /></TableCell>
+                  <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="ml-auto h-7 w-7 rounded-md" /></TableCell>
+                </TableRow>
+              ))}
+            </>
           ) : forms && forms.length > 0 ? (
             forms.map((form) => <FormRow key={form.id} form={form} />)
           ) : (

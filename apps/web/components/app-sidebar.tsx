@@ -6,6 +6,7 @@ import {
   IconInnerShadowTop,
   IconSettings,
   IconArticle,
+  IconCompass,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "~/components/nav-documents"
@@ -37,8 +38,13 @@ const data = {
     {
       title: "Forms",
       url: "/dashboard/forms",
-      icon: IconArticle
-    }
+      icon: IconArticle,
+    },
+    {
+      title: "Explore",
+      url: "/explore",
+      icon: IconCompass,
+    },
   ],
   navClouds: [
 

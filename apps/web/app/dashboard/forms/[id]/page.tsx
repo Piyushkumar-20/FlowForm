@@ -9,8 +9,10 @@ import {
   CopyIcon,
   EyeIcon,
   GitBranchIcon,
+  MessageSquareIcon,
   PencilIcon,
   PlusIcon,
+  QrCodeIcon,
   SettingsIcon,
   Trash2Icon,
   XIcon,
@@ -20,6 +22,7 @@ import { toast } from "sonner";
 import { AddFieldModal } from "~/components/add-field-modal";
 import { FieldConditionsModal } from "~/components/field-conditions-modal";
 import { FormPreviewSheet } from "~/components/form-preview-sheet";
+import { QrCodeModal } from "~/components/qr-code-modal";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -89,6 +92,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   const [isAddFieldOpen, setIsAddFieldOpen] = React.useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [isQrOpen, setIsQrOpen] = React.useState(false);
   const [localFields, setLocalFields] = React.useState<Field[]>([]);
   const [deletedFieldIds, setDeletedFieldIds] = React.useState<Set<string>>(() => new Set());
   const [editingField, setEditingField] = React.useState<Field | null>(null);
@@ -395,6 +399,20 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
               Settings
             </Button>
 
+            {/* View responses */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              asChild
+            >
+              <Link href={`/dashboard/forms/${formId}/submissions`}>
+                <MessageSquareIcon className="size-4" />
+                Responses
+              </Link>
+            </Button>
+
             {/* Copy shareable link */}
             <Button
               type="button"
@@ -415,6 +433,23 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <CopyIcon className="size-4" />
               )}
               {copied ? "Copied!" : "Copy Link"}
+            </Button>
+
+            {/* QR Code */}
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="rounded-xl"
+              onClick={() => setIsQrOpen(true)}
+              disabled={form?.status !== "published"}
+              title={
+                form?.status !== "published"
+                  ? "Publish the form first to generate a QR code"
+                  : "Show QR code"
+              }
+            >
+              <QrCodeIcon className="size-4" />
             </Button>
 
             {/* Visibility */}
@@ -725,6 +760,18 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         title={form?.title}
         description={form?.description}
         fields={localFields}
+      />
+
+      {/* QR Code Modal */}
+      <QrCodeModal
+        open={isQrOpen}
+        onOpenChange={setIsQrOpen}
+        url={
+          typeof window !== "undefined"
+            ? `${window.location.origin}/form/${formId}`
+            : `/form/${formId}`
+        }
+        formTitle={form?.title}
       />
 
       {/* Conditional Logic Modal */}

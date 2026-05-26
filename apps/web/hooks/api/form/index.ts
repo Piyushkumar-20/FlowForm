@@ -88,9 +88,7 @@ export const useGetFields = (formId: string) => {
   const { data, isFetched, isFetching, isLoading, error, refetch, status } =
     trpc.form.getFields.useQuery({ formId }, { enabled: Boolean(formId) });
 
-  // CRITICAL: memoize so we don't return a fresh `[]` on every render.
-  // Without this, any useEffect with `fields` in its deps loops infinitely
-  // while the query is loading.
+
   const fields = useMemo(() => data ?? [], [data]);
 
   return { fields, error, isFetching, isLoading, status, isFetched, refetch };
@@ -226,4 +224,10 @@ export const useRestoreForm = () => {
     },
   });
   return { restoreFormAsync, isPending };
+};
+
+export const useGetPublicForms = () => {
+  const { data, isLoading, error } = trpc.form.getPublicForms.useQuery();
+  const forms = useMemo(() => data ?? [], [data]);
+  return { forms, isLoading, error };
 };
