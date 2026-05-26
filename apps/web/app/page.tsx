@@ -3,18 +3,20 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "~/hooks/api/auth";
+import FormFlowLanding from "~/components/form-flow-landing";
 
 export default function Home() {
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (user?.id) {
+    if (!isLoading && user?.id) {
       router.replace("/dashboard");
-    } else {
-      router.replace("/login");
     }
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
-  return null;
+  if (isLoading) return null;
+  if (user?.id) return null;
+
+  return <FormFlowLanding />;
 }
