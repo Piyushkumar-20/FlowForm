@@ -120,6 +120,7 @@ export const getPublicFormsOutputModel = z.array(
     id: z.string().uuid(),
     title: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
+    isFeatured: z.boolean(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable().optional(),
   }),

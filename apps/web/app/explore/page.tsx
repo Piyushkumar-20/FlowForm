@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRightIcon, CompassIcon } from "lucide-react";
+import { ArrowRightIcon, CompassIcon, StarIcon } from "lucide-react";
 
 import { useGetPublicForms } from "~/hooks/api/form";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -128,8 +128,19 @@ export default function ExplorePage() {
                 <Link
                   key={form.id}
                   href={`/form/${form.id}`}
-                  className="group relative flex flex-col justify-between rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(29,158,117,0.3)] hover:bg-[rgba(29,158,117,0.04)]"
+                  className={`group relative flex flex-col justify-between rounded-[14px] border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[rgba(29,158,117,0.04)] ${
+                    form.isFeatured
+                      ? "border-[rgba(234,179,8,0.25)] bg-[rgba(234,179,8,0.03)] hover:border-[rgba(234,179,8,0.4)]"
+                      : "border-white/[0.07] bg-white/[0.03] hover:border-[rgba(29,158,117,0.3)]"
+                  }`}
                 >
+                  {form.isFeatured && (
+                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2 py-0.5">
+                      <StarIcon className="size-2.5 fill-yellow-400 text-yellow-400" />
+                      <span className="text-[10px] font-medium text-yellow-400">Featured</span>
+                    </div>
+                  )}
+
                   <div>
                     <h2
                       className="mb-2 text-[18px] leading-[1.2] text-white/85 transition-colors group-hover:text-white"
@@ -145,7 +156,7 @@ export default function ExplorePage() {
                         {form.description}
                       </p>
                     ) : (
-                      <p className="text-[13px] text-white/20 italic">
+                      <p className="text-[13px] italic text-white/20">
                         No description
                       </p>
                     )}

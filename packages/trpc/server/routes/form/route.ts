@@ -1,4 +1,4 @@
-import { publicProcedure, router, authenticateProcedure } from "../../trpc";
+import { publicProcedure, router, authenticateProcedure, adminProcedure } from "../../trpc";
 import { formService, formFieldService, formSubmissionService } from "../../services";
 import {
   createFormInputModel,
@@ -63,32 +63,32 @@ export const formRouter = router({
     .meta({ openapi: { method: "POST", path: getPath("/updateForm"), tags: TAGS, protect: true } })
     .input(updateFormInputModel)
     .output(updateFormOutputModel)
-    .mutation(async ({ input }) => {
-      return formService.updateForm(input);
+    .mutation(async ({ ctx, input }) => {
+      return formService.updateForm(input, ctx.user.id);
     }),
 
   publishForm: authenticateProcedure
     .meta({ openapi: { method: "POST", path: getPath("/publishForm"), tags: TAGS, protect: true } })
     .input(publishFormInputModel)
     .output(publishFormOutputModel)
-    .mutation(async ({ input }) => {
-      return formService.publishForm(input);
+    .mutation(async ({ ctx, input }) => {
+      return formService.publishForm(input, ctx.user.id);
     }),
 
   unpublishForm: authenticateProcedure
     .meta({ openapi: { method: "POST", path: getPath("/unpublishForm"), tags: TAGS, protect: true } })
     .input(unpublishFormInputModel)
     .output(unpublishFormOutputModel)
-    .mutation(async ({ input }) => {
-      return formService.unpublishForm(input);
+    .mutation(async ({ ctx, input }) => {
+      return formService.unpublishForm(input, ctx.user.id);
     }),
 
   deleteForm: authenticateProcedure
     .meta({ openapi: { method: "POST", path: getPath("/deleteForm"), tags: TAGS, protect: true } })
     .input(deleteFormInputModel)
     .output(deleteFormOutputModel)
-    .mutation(async ({ input }) => {
-      return formService.deleteForm(input);
+    .mutation(async ({ ctx, input }) => {
+      return formService.deleteForm(input, ctx.user.id);
     }),
 
   listForms: authenticateProcedure
@@ -191,16 +191,16 @@ export const formRouter = router({
     .meta({ openapi: { method: "POST", path: getPath("/archiveForm"), tags: TAGS, protect: true } })
     .input(archiveFormInputModel)
     .output(archiveFormOutputModel)
-    .mutation(async ({ input }) => {
-      return formService.archiveForm({ formId: input.formId });
+    .mutation(async ({ ctx, input }) => {
+      return formService.archiveForm({ formId: input.formId }, ctx.user.id);
     }),
 
   restoreForm: authenticateProcedure
     .meta({ openapi: { method: "POST", path: getPath("/restoreForm"), tags: TAGS, protect: true } })
     .input(archiveFormInputModel)
     .output(archiveFormOutputModel)
-    .mutation(async ({ input }) => {
-      return formService.restoreForm({ formId: input.formId });
+    .mutation(async ({ ctx, input }) => {
+      return formService.restoreForm({ formId: input.formId }, ctx.user.id);
     }),
 
   /* ── SLUG-BASED ACCESS ──────────────────────────────────────────────── */

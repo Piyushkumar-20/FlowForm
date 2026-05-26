@@ -16,6 +16,7 @@ export const formsTable = pgTable("forms", {
   expiresAt: timestamp("expires_at"),
   maxResponses: integer("max_responses"),
   isArchived: boolean("is_archived").default(false).notNull(),
+  isFeatured: boolean("is_featured").default(false).notNull(),
   slug: varchar("slug", { length: 100 }).unique(),
 
   createdBy: uuid("created_by").references(() => usersTable.id),

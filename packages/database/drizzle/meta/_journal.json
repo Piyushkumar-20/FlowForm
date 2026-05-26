@@ -64,6 +64,13 @@
       "when": 1779808918334,
       "tag": "0008_needy_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1779811568876,
+      "tag": "0009_narrow_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

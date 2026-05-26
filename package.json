@@ -7,6 +7,7 @@
     "db:generate": "dotenv -- turbo db:generate",
     "db:migrate": "dotenv -- turbo db:migrate",
     "db:studio": "dotenv -- turbo db:studio",
+    "seed": "pnpm --filter @repo/database seed",
 
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

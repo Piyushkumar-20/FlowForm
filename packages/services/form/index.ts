@@ -19,9 +19,10 @@ import {
   type ArchiveFormInputType,
   archiveFormInput,
 } from "./model";
-import { db, eq, asc, and } from "@repo/database";
+import { db, eq, asc, and, desc } from "@repo/database";
 import { formsTable } from "@repo/database/models/form";
 import { formFieldTable } from "@repo/database/models/form-fields";
+import { usersTable } from "@repo/database/models/user";
 
 class FormService {
   public async createForm(payload: CreateFormInputType): Promise<CreateFormOutputType> {
@@ -138,7 +139,7 @@ class FormService {
     return result[0]!;
   }
 
-  public async updateForm(payload: UpdateFormInputType) {
+  public async updateForm(payload: UpdateFormInputType, userId: string) {
     const { formId, ...updates } = await updateFormInput.parseAsync(payload);
 
     const patch: Partial<typeof formsTable.$inferInsert> = {};
@@ -154,7 +155,7 @@ class FormService {
     const result = await db
       .update(formsTable)
       .set(patch)
-      .where(eq(formsTable.id, formId))
+      .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, userId)))
       .returning({
         id: formsTable.id,
         title: formsTable.title,
@@ -164,47 +165,48 @@ class FormService {
         updatedAt: formsTable.updatedAt,
       });
 
-    if (!result || result.length === 0) throw new Error("Form not found");
+    if (!result || result.length === 0) throw new Error("Form not found or access denied");
     return result[0]!;
   }
 
-  public async publishForm(payload: PublishFormInputType) {
+  public async publishForm(payload: PublishFormInputType, userId: string) {
     const { formId } = await publishFormInput.parseAsync(payload);
 
     const result = await db
       .update(formsTable)
       .set({ status: "published" })
-      .where(eq(formsTable.id, formId))
+      .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, userId)))
       .returning({ id: formsTable.id, status: formsTable.status });
 
-    if (!result || result.length === 0) throw new Error("Form not found");
+    if (!result || result.length === 0) throw new Error("Form not found or access denied");
     return result[0]!;
   }
 
-  public async unpublishForm(payload: UnpublishFormInputType) {
+  public async unpublishForm(payload: UnpublishFormInputType, userId: string) {
     const { formId } = await unpublishFormInput.parseAsync(payload);
 
     const result = await db
       .update(formsTable)
       .set({ status: "unpublished" })
-      .where(eq(formsTable.id, formId))
+      .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, userId)))
       .returning({ id: formsTable.id, status: formsTable.status });
 
-    if (!result || result.length === 0) throw new Error("Form not found");
+    if (!result || result.length === 0) throw new Error("Form not found or access denied");
     return result[0]!;
   }
 
-  public async deleteForm(payload: DeleteFormInputType) {
+  public async deleteForm(payload: DeleteFormInputType, userId: string) {
     const { formId } = await deleteFormInput.parseAsync(payload);
 
+    const [owned] = await db
+      .select({ id: formsTable.id })
+      .from(formsTable)
+      .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, userId)));
+
+    if (!owned) throw new Error("Form not found or access denied");
+
     await db.delete(formFieldTable).where(eq(formFieldTable.formId, formId));
-
-    const result = await db
-      .delete(formsTable)
-      .where(eq(formsTable.id, formId))
-      .returning({ id: formsTable.id });
-
-    if (!result || result.length === 0) throw new Error("Form not found");
+    await db.delete(formsTable).where(eq(formsTable.id, formId));
     return { success: true, message: "Form deleted successfully" };
   }
 
@@ -260,29 +262,29 @@ class FormService {
     };
   }
 
-  public async archiveForm(payload: ArchiveFormInputType) {
+  public async archiveForm(payload: ArchiveFormInputType, userId: string) {
     const { formId } = await archiveFormInput.parseAsync(payload);
 
     const result = await db
       .update(formsTable)
       .set({ isArchived: true })
-      .where(eq(formsTable.id, formId))
+      .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, userId)))
       .returning({ id: formsTable.id });
 
-    if (!result[0]) throw new Error("Form not found");
+    if (!result[0]) throw new Error("Form not found or access denied");
     return { success: true };
   }
 
-  public async restoreForm(payload: ArchiveFormInputType) {
+  public async restoreForm(payload: ArchiveFormInputType, userId: string) {
     const { formId } = await archiveFormInput.parseAsync(payload);
 
     const result = await db
       .update(formsTable)
       .set({ isArchived: false })
-      .where(eq(formsTable.id, formId))
+      .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, userId)))
       .returning({ id: formsTable.id });
 
-    if (!result[0]) throw new Error("Form not found");
+    if (!result[0]) throw new Error("Form not found or access denied");
     return { success: true };
   }
 
@@ -292,6 +294,7 @@ class FormService {
         id: formsTable.id,
         title: formsTable.title,
         description: formsTable.description,
+        isFeatured: formsTable.isFeatured,
         createdAt: formsTable.createdAt,
         updatedAt: formsTable.updatedAt,
       })
@@ -302,7 +305,83 @@ class FormService {
           eq(formsTable.visibility, "public"),
           eq(formsTable.isArchived, false),
         ),
-      );
+      )
+      .orderBy(desc(formsTable.isFeatured), desc(formsTable.createdAt));
+  }
+
+  /* ── Admin-only operations ─────────────────────────────────────────── */
+
+  public async adminArchiveAnyForm(formId: string) {
+    const result = await db
+      .update(formsTable)
+      .set({ isArchived: true, status: "unpublished" })
+      .where(eq(formsTable.id, formId))
+      .returning({ id: formsTable.id });
+
+    if (!result[0]) throw new Error("Form not found");
+    return { success: true };
+  }
+
+  public async adminUnarchiveAnyForm(formId: string) {
+    const result = await db
+      .update(formsTable)
+      .set({ isArchived: false })
+      .where(eq(formsTable.id, formId))
+      .returning({ id: formsTable.id });
+
+    if (!result[0]) throw new Error("Form not found");
+    return { success: true };
+  }
+
+  public async adminDeleteAnyForm(formId: string) {
+    const [exists] = await db
+      .select({ id: formsTable.id })
+      .from(formsTable)
+      .where(eq(formsTable.id, formId));
+
+    if (!exists) throw new Error("Form not found");
+
+    await db.delete(formFieldTable).where(eq(formFieldTable.formId, formId));
+    await db.delete(formsTable).where(eq(formsTable.id, formId));
+    return { success: true };
+  }
+
+  public async adminToggleFeaturedForm(formId: string) {
+    const [current] = await db
+      .select({ isFeatured: formsTable.isFeatured })
+      .from(formsTable)
+      .where(eq(formsTable.id, formId));
+
+    if (!current) throw new Error("Form not found");
+
+    const result = await db
+      .update(formsTable)
+      .set({ isFeatured: !current.isFeatured })
+      .where(eq(formsTable.id, formId))
+      .returning({ id: formsTable.id, isFeatured: formsTable.isFeatured });
+
+    return { success: true, isFeatured: result[0]!.isFeatured };
+  }
+
+  public async adminListAllForms() {
+    const rows = await db
+      .select({
+        id: formsTable.id,
+        title: formsTable.title,
+        description: formsTable.description,
+        status: formsTable.status,
+        visibility: formsTable.visibility,
+        isArchived: formsTable.isArchived,
+        isFeatured: formsTable.isFeatured,
+        createdAt: formsTable.createdAt,
+        ownerName: usersTable.fullName,
+        ownerEmail: usersTable.email,
+      })
+      .from(formsTable)
+      .leftJoin(usersTable, eq(formsTable.createdBy, usersTable.id))
+      .orderBy(desc(formsTable.createdAt));
+
+    return rows;
   }
 }
 
