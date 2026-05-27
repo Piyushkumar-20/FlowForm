@@ -4,7 +4,7 @@ const nextConfig = {
     const apiBase = process.env.API_URL ?? "http://localhost:8000";
     return [
       {
-        source: "/trpc/:path*",
+        source: "/api/trpc/:path*",
         destination: `${apiBase}/trpc/:path*`,
       },
     ];
