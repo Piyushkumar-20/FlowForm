@@ -5,7 +5,11 @@
     "DATABASE_URL",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
-    "NODE_ENV"
+    "NODE_ENV",
+    "API_URL",
+    "CORS_ORIGIN",
+    "VERCEL_URL",
+    "VERCEL_ENV"
   ],
   "tasks": {
     "build": {

@@ -1,8 +1,8 @@
 type TRPCLikeError = {
   message?: string;
-  data?: { code?: string } | null;
-  // tRPC v11 puts the code directly on the error in some paths
-  shape?: { data?: { code?: string } };
+  data?: { code?: string | undefined } | null | undefined;
+  // tRPC v11: `shape` is typed as `Maybe<{...}>` which includes null
+  shape?: { data?: { code?: string | undefined } | null | undefined } | null | undefined;
 };
 
 export function getTRPCErrorMessage(
