@@ -7,14 +7,15 @@
     "@repo/typescript-config": "workspace:*",
     "@types/express": "^5.0.6",
     "dotenv-cli": "^11.0.0",
-    "express": "^5.2.1",
-    "typescript": "^5.9.3"
+    "express": "^5.2.1"
+    
   },
   "dependencies": {
     "@repo/services": "workspace:*",
     "@trpc/client": "^11.8.1",
     "@trpc/server": "^11.8.1",
     "trpc-to-openapi": "^3.1.0",
-    "zod": "^4.3.5"
+    "zod": "^4.3.5",
+    "typescript": "^5.9.3"
   }
 }
