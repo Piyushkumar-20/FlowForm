@@ -1,21 +1,11 @@
 {
   "name": "@repo/logger",
   "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsup index.ts --format cjs --dts --out-dir dist"
-  },
+  "main": "./index.ts",
+  "scripts": {},
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },
   "dependencies": {
