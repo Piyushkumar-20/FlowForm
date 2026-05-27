@@ -24,6 +24,8 @@ export const GlobalProviders: React.FC<{
             },
             refetchOnWindowFocus: false,
             refetchOnMount: false,
+            refetchOnReconnect: false,
+            networkMode: "always",
             staleTime: Infinity,
           },
           mutations: {

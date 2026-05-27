@@ -76,7 +76,10 @@ export const useUser = () => {
       retry: false,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      networkMode: "always",
       gcTime: Infinity,
+      staleTime: Infinity,
     });
 
   return {
