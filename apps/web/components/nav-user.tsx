@@ -8,6 +8,8 @@ import {
   IconUserCircle,
 } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
+import { useUser } from "~/hooks/api/auth"
+import { PlanBadge } from "~/app/dashboard/billing/page"
 
 import {
   Avatar,
@@ -43,6 +45,7 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const { logoutAsync, isPending } = useLogout()
   const router = useRouter()
+  const { user: currentUser } = useUser()
 
   const handleLogout = async () => {
     try {
@@ -100,9 +103,12 @@ export function NavUser({
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/dashboard/billing")}>
                 <IconCreditCard />
-                Billing
+                <span className="flex-1">Billing</span>
+                {currentUser?.plan && (
+                  <PlanBadge plan={currentUser.plan as "free" | "pro" | "enterprise"} />
+                )}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconNotification />

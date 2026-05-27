@@ -8,6 +8,7 @@ import {
   IconArticle,
   IconCompass,
   IconShield,
+  IconCreditCard,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "~/components/nav-documents"
@@ -40,6 +41,11 @@ const baseNavMain = [
     title: "Explore",
     url: "/explore",
     icon: IconCompass,
+  },
+  {
+    title: "Billing",
+    url: "/dashboard/billing",
+    icon: IconCreditCard,
   },
 ];
 

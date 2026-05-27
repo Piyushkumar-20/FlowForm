@@ -52,6 +52,8 @@ import {
   useAdminDeleteAnyForm,
   useAdminToggleFeaturedForm,
 } from "~/hooks/api/admin";
+import { useAdminListUserPlans } from "~/hooks/api/billing";
+import { PlanBadge } from "~/app/dashboard/billing/page";
 
 function formatDate(value: Date | string | null | undefined) {
   if (!value) return "—";
@@ -244,6 +246,7 @@ export default function AdminPage() {
   const { stats, isLoading: statsLoading } = useAdminStats();
   const { recentUsers, recentForms, isLoading: recentLoading } = useAdminRecentData();
   const { forms: allForms, isLoading: formsLoading } = useAdminListAllForms();
+  const { users: usersWithPlans, isLoading: plansLoading } = useAdminListUserPlans();
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-8">
@@ -453,6 +456,75 @@ export default function AdminPage() {
               ) : (
                 allForms.map((form) => (
                   <FormModerationRow key={form.id} form={form} />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
+
+      {/* User Subscriptions */}
+      <section className="mt-6">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">
+          User Subscriptions
+          {!plansLoading && (
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              {usersWithPlans.length} {usersWithPlans.length === 1 ? "user" : "users"}
+            </span>
+          )}
+        </h2>
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead className="hidden md:table-cell">Role</TableHead>
+                <TableHead className="hidden lg:table-cell">Plan Changed</TableHead>
+                <TableHead className="hidden lg:table-cell">Joined</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {plansLoading ? (
+                <>
+                  {[1, 2, 3, 4].map((i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-36" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-14 rounded-md" /></TableCell>
+                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                    </TableRow>
+                  ))}
+                </>
+              ) : usersWithPlans.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={6} className="h-20 text-center text-sm text-muted-foreground">
+                    No users yet
+                  </TableCell>
+                </TableRow>
+              ) : (
+                usersWithPlans.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.fullName}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
+                    <TableCell>
+                      <PlanBadge plan={u.plan as "free" | "pro" | "enterprise"} />
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${ROLE_STYLES[u.role]}`}>
+                        {u.role}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                      {formatDate(u.planUpdatedAt)}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                      {formatDate(u.createdAt)}
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>

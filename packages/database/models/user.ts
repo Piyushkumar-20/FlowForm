@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
+export const subscriptionPlanEnum = pgEnum("subscription_plan", ["free", "pro", "enterprise"]);
 
 export const usersTable = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
@@ -24,6 +25,9 @@ export const usersTable = pgTable("users", {
   password: text('password'),
 
   role: userRoleEnum("role").default("USER").notNull(),
+
+  plan: subscriptionPlanEnum("plan").default("free").notNull(),
+  planUpdatedAt: timestamp("plan_updated_at"),
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),

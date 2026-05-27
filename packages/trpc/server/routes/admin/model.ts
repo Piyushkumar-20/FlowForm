@@ -11,6 +11,7 @@ export const recentUserSchema = z.object({
   fullName: z.string(),
   email: z.string(),
   role: z.enum(["USER", "ADMIN"]),
+  plan: z.enum(["free", "pro", "enterprise"]),
   createdAt: z.date().nullable(),
 });
 

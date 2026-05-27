@@ -43,12 +43,12 @@ export const authenticateProcedure = tRPCContext.procedure.use(async options => 
     throw new TRPCError({ code: "UNAUTHORIZED", message: "User not logged in" });
   }
   try {
-    const { id, email, fullName, profileImageUrl, role } =
+    const { id, email, fullName, profileImageUrl, role, plan } =
       await userService.verifyAndDecodeUserToken(userToken);
     return options.next({
       ctx: {
         ...ctx,
-        user: { id, email, fullName, profileImageUrl, role },
+        user: { id, email, fullName, profileImageUrl, role, plan },
       },
     });
   } catch {

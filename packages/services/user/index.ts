@@ -5,7 +5,8 @@ import {
   GenerateUserTokenPayloadType,
   SignInUserWithEmailAndPasswordInputType,
   signInUserWithEmailAndPasswordInput,
-  VerifyAndDecodeUserTokenOutputType
+  VerifyAndDecodeUserTokenOutputType,
+  type SubscriptionPlan,
 } from "./model";
 
 import * as JWT from "jsonwebtoken";
@@ -49,6 +50,7 @@ class UserService {
       fullName: usersTable.fullName,
       profileImageUrl: usersTable.profileImageUrl,
       role: usersTable.role,
+      plan: usersTable.plan,
     }).from(usersTable).where(eq(usersTable.id, id));
 
     if (!userRecord) throw new Error('User does not exist');
@@ -121,7 +123,33 @@ class UserService {
       fullName: userInfo.fullName,
       profileImageUrl: userInfo.profileImageUrl,
       role: userInfo.role,
+      plan: userInfo.plan,
     };
+  }
+
+  public async updateUserPlan(userId: string, plan: SubscriptionPlan): Promise<void> {
+    const result = await db
+      .update(usersTable)
+      .set({ plan, planUpdatedAt: new Date() })
+      .where(eq(usersTable.id, userId))
+      .returning({ id: usersTable.id });
+
+    if (!result[0]) throw new Error("User not found");
+  }
+
+  public async getUsersWithPlans() {
+    return db
+      .select({
+        id: usersTable.id,
+        fullName: usersTable.fullName,
+        email: usersTable.email,
+        role: usersTable.role,
+        plan: usersTable.plan,
+        planUpdatedAt: usersTable.planUpdatedAt,
+        createdAt: usersTable.createdAt,
+      })
+      .from(usersTable)
+      .orderBy(sql`${usersTable.createdAt} desc`);
   }
 
   public async getUserRoleById(id: string): Promise<"USER" | "ADMIN"> {
@@ -147,6 +175,7 @@ class UserService {
       fullName: usersTable.fullName,
       email: usersTable.email,
       role: usersTable.role,
+      plan: usersTable.plan,
       createdAt: usersTable.createdAt,
     }).from(usersTable).orderBy(sql`${usersTable.createdAt} desc`).limit(limit);
   }

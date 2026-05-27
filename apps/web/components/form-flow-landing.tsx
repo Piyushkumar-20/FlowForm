@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "~/hooks/api/auth";
 
 const NAV_LINKS = ["Features", "Templates", "Pricing", "Docs"];
 
@@ -171,6 +172,16 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 
 export default function FormFlowLanding() {
   const router = useRouter();
+  const { user } = useUser();
+
+  const handlePlanClick = (planName: string) => {
+    if (user?.id) {
+      router.push("/dashboard/billing");
+    } else {
+      router.push(`/login?plan=${planName.toLowerCase()}`);
+    }
+  };
+
   const [scrolled, setScrolled]       = useState(false);
   const [mobileOpen, setMobileOpen]   = useState(false);
   const [activeField, setActiveField] = useState(0);
@@ -668,7 +679,7 @@ export default function FormFlowLanding() {
                   ))}
                 </ul>
                 <button
-                  onClick={() => router.push("/signup")}
+                  onClick={() => handlePlanClick(plan.name)}
                   style={{
                     padding: 12, borderRadius: 10, fontSize: 14, width: "100%",
                     fontFamily: "'DM Sans', sans-serif", fontWeight: 600, cursor: "pointer",

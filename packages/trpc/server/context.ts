@@ -9,6 +9,7 @@ export interface TRPCCtxUser {
     fullName: string;
     profileImageUrl?: string | null;
     role: "USER" | "ADMIN";
+    plan: "free" | "pro" | "enterprise";
 }
 export interface TRPCContext {
     req: Request;

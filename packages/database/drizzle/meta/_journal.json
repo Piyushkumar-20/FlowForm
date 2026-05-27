@@ -71,6 +71,13 @@
       "when": 1779811568876,
       "tag": "0009_narrow_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1779881569752,
+      "tag": "0010_dark_thena",
+      "breakpoints": true
     }
   ]
 }

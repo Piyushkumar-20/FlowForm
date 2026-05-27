@@ -107,8 +107,8 @@ export const authRouter = router({
     .output(getLoggedInUserOutputModel)
     // ctx.user is already populated by authenticateProcedure — no second token verification needed.
     .query(({ ctx }) => {
-      const { id, email, fullName, profileImageUrl, role } = ctx.user;
-      return { id, email, fullName, profileImageUrl, role };
+      const { id, email, fullName, profileImageUrl, role, plan } = ctx.user;
+      return { id, email, fullName, profileImageUrl, role, plan };
     }),
 });
 
