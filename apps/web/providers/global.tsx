@@ -8,23 +8,33 @@ import { Toaster } from "~/components/ui/sonner";
 import { trpc } from "~/trpc/client";
 import { createTRPCHttpBatchClientClient } from "~/trpc/create-client";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnMount: true,
-      staleTime: Infinity,
-    },
-    mutations: {
-      onError: (err) => {
-        console.error("[QueryClient] unhandled mutation error:", err);
-      },
-    },
-  },
-});
-
 export const GlobalProviders: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: (failureCount, error) => {
+              const code = (error as { data?: { code?: string } } | null)?.data
+                ?.code;
+              if (code === "UNAUTHORIZED" || code === "FORBIDDEN") return false;
+              return failureCount < 2;
+            },
+            refetchOnWindowFocus: false,
+            refetchOnMount: false,
+            staleTime: Infinity,
+          },
+          mutations: {
+            onError: (err) => {
+              console.error("[QueryClient] unhandled mutation error:", err);
+            },
+          },
+        },
+      }),
+  );
+
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [createTRPCHttpBatchClientClient()],

@@ -71,9 +71,13 @@ export const useLogout = () => {
 };
 
 export const useUser = () => {
-  const {data: user, isFetched, isFetching, error, isLoading, status} = trpc.auth.getLoggedInUser.useQuery(undefined, {
-    retry: false,
-  })
+  const { data: user, isFetched, isFetching, error, isLoading, status } =
+    trpc.auth.getLoggedInUser.useQuery(undefined, {
+      retry: false,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      gcTime: Infinity,
+    });
 
   return {
     user,
@@ -81,6 +85,6 @@ export const useUser = () => {
     isFetching,
     error,
     isLoading,
-    status
-  }
+    status,
+  };
 }
