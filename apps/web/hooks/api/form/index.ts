@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { toast } from "sonner";
 import { trpc } from "~/trpc/client";
 import { getTRPCErrorMessage } from "~/lib/trpc-error";
-import type { RouterOutputs } from "../../../../../packages/trpc/client/index";
+import type { RouterOutputs } from "@repo/trpc/client";
 
 export const useCreateForm = () => {
   const utils = trpc.useUtils();

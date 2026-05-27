@@ -19,20 +19,31 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
   baseUrl: env.BASE_URL.concat("/api"),
 });
 
-  app.use(
-    cors({
-      // Allow any localhost origin (covers port variations in dev) and no-origin
-      // requests from server-to-server proxies (e.g. Next.js rewrites).
-      origin: (origin, callback) => {
-        if (!origin || origin.startsWith("http://localhost")) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
-      credentials: true,
-    }),
-  );
+// Build the CORS allowlist.
+// - Always allow same-origin (no Origin header = server-to-server proxy like Vercel rewrites).
+// - Always allow any localhost port for local dev.
+// - In production, also allow the origins listed in CORS_ORIGIN (comma-separated).
+const extraOrigins = env.CORS_ORIGIN
+  ? env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
+  : [];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin.startsWith("http://localhost") ||
+        origin.startsWith("http://127.0.0.1") ||
+        extraOrigins.includes(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin '${origin}' is not allowed`));
+      }
+    },
+    credentials: true,
+  }),
+);
 
 
 app.use(cookieParser());

@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { userService, formService } from "../../services";
 import { adminProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
@@ -16,14 +17,16 @@ const getPath = generatePath("/admin");
 
 export const adminRouter = router({
   getAdminStats: adminProcedure
-    .meta({ openapi: { method: "POST", path: getPath("/getAdminStats"), tags: TAGS, protect: true } })
+    .meta({ openapi: { method: "GET", path: getPath("/getAdminStats"), tags: TAGS, protect: true } })
+    .input(z.undefined())
     .output(getAdminStatsOutputModel)
     .query(async () => {
       return userService.getAdminStats();
     }),
 
   getAdminRecentData: adminProcedure
-    .meta({ openapi: { method: "POST", path: getPath("/getAdminRecentData"), tags: TAGS, protect: true } })
+    .meta({ openapi: { method: "GET", path: getPath("/getAdminRecentData"), tags: TAGS, protect: true } })
+    .input(z.undefined())
     .output(getAdminRecentDataOutputModel)
     .query(async () => {
       const [recentUsers, recentForms] = await Promise.all([
@@ -36,7 +39,8 @@ export const adminRouter = router({
   /* ── Form moderation ──────────────────────────────────────────────── */
 
   listAllForms: adminProcedure
-    .meta({ openapi: { method: "POST", path: getPath("/listAllForms"), tags: TAGS, protect: true } })
+    .meta({ openapi: { method: "GET", path: getPath("/listAllForms"), tags: TAGS, protect: true } })
+    .input(z.undefined())
     .output(listAllFormsOutputModel)
     .query(async () => {
       return formService.adminListAllForms();

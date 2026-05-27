@@ -4,6 +4,10 @@ const envSchema = z.object({
   PORT: z.string().optional(),
   NODE_ENV: z.enum(["development", "prod", "production"]).default("development"),
   BASE_URL: z.string().default("http://localhost:8000"),
+  // Comma-separated list of allowed CORS origins, e.g.:
+  //   CORS_ORIGIN=https://myapp.vercel.app,https://www.myapp.com
+  // Leave unset in local dev — localhost is always allowed.
+  CORS_ORIGIN: z.string().optional(),
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {

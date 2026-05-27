@@ -35,8 +35,8 @@ export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
- const { createUserWithEmailAndPasswordAsync } = useSignup();
- const router = useRouter()
+  const { createUserWithEmailAndPasswordAsync, isPending } = useSignup();
+  const router = useRouter();
   const form = useForm<SignupFormValues>({
     defaultValues: {
       name: "",
@@ -44,7 +44,7 @@ export function SignupForm({
       password: "",
       confirmPassword: "",
     },
-  })
+  });
 
   const onSubmit = async (values: SignupFormValues) => {
     try {
@@ -55,9 +55,14 @@ export function SignupForm({
       });
       router.replace("/dashboard");
     } catch (err) {
-      toast.error(getTRPCErrorMessage(err as { message?: string; data?: { code?: string } }, "Unable to create account. Please try again."));
+      toast.error(
+        getTRPCErrorMessage(
+          err as { message?: string; data?: { code?: string } },
+          "Unable to create account. Please try again.",
+        ),
+      );
     }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -151,8 +156,8 @@ export function SignupForm({
               </p>
 
               <div className="space-y-3">
-                <Button type="submit" className="w-full">
-                  Create Account
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? "Creating account…" : "Create Account"}
                 </Button>
                 <p className="text-muted-foreground text-center text-sm">
                   Already have an account? <a href="login">Sign in</a>

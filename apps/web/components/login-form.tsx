@@ -32,7 +32,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const { signInUserWithEmailAndPasswordAsync } = useSignin();
+  const { signInUserWithEmailAndPasswordAsync, isPending } = useSignin();
   const router = useRouter()
   const form = useForm<LoginFormValues>({
     defaultValues: {
@@ -41,15 +41,20 @@ export function LoginForm({
     },
   })
 
-  const onSubmit: SubmitHandler<LoginFormValues> = async(values) => {
+  const onSubmit: SubmitHandler<LoginFormValues> = async (values) => {
     try {
       await signInUserWithEmailAndPasswordAsync({
         email: values.email,
-        password: values.password
-      })
-      router.replace('/dashboard')
+        password: values.password,
+      });
+      router.replace("/dashboard");
     } catch (error) {
-      toast.error(getTRPCErrorMessage(error as { message?: string; data?: { code?: string } }, "Sign in failed. Please try again."));
+      toast.error(
+        getTRPCErrorMessage(
+          error as { message?: string; data?: { code?: string } },
+          "Sign in failed. Please try again.",
+        ),
+      );
     }
   }
 
@@ -116,7 +121,9 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <Button type="submit">Login</Button>
+                <Button type="submit" disabled={isPending} className="w-full">
+                  {isPending ? "Signing in…" : "Login"}
+                </Button>
                 <FieldDescription className="text-center">
                   Don&apos;t have an account? <a href="/signup">Sign up</a>
                 </FieldDescription>

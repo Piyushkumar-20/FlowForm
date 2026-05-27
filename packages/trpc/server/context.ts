@@ -5,6 +5,10 @@ import { clearCookieFactory, createCookieFactory, getCookieFactory } from "./uti
 
 export interface TRPCCtxUser {
     id: string;
+    email: string;
+    fullName: string;
+    profileImageUrl?: string | null;
+    role: "USER" | "ADMIN";
 }
 export interface TRPCContext {
     req: Request;

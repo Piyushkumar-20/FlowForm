@@ -1,7 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
 import { userService } from "../../services";
-import type { TRPCContext } from "../../context";
 import { authenticateProcedure, publicProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import {
@@ -13,7 +11,7 @@ import {
   getLoggedInUserOutputModel,
   logoutOutputModel,
 } from "./model";
-import { getAuthenticationCookie, clearAuthenticationoCookie } from "../../utils/cookie"
+import { setAuthenticationCookie, clearAuthenticationoCookie } from "../../utils/cookie";
 
 const TAGS = ["Authentication"];
 const getPath = generatePath("/authentication");
@@ -48,6 +46,7 @@ export const authRouter = router({
       }
     }),
 
+
   signInUserWithEmailAndPassword: publicProcedure
     .meta({
       openapi: {
@@ -68,7 +67,13 @@ export const authRouter = router({
         if (err instanceof TRPCError) throw err;
         const msg = err instanceof Error ? err.message.toLowerCase() : "";
         console.error("[auth.signIn] error:", err);
-        if (msg.includes("invalid username") || msg.includes("invalid authentication")) {
+        if (
+          msg.includes("invalid username") ||
+          msg.includes("invalid authentication") ||
+          msg.includes("invalid credentials") ||
+          msg.includes("not found") ||
+          msg.includes("incorrect password")
+        ) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password." });
         }
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Sign in failed. Please try again." });
@@ -89,38 +94,23 @@ export const authRouter = router({
       return { success: true };
     }),
 
-    getLoggedInUser: authenticateProcedure.meta({
+    getLoggedInUser: authenticateProcedure
+    .meta({
       openapi: {
-        method: "POST",
+        method: "GET",
         path: getPath("/getLoggedInUser"),
         tags: TAGS,
-        protect: true
+        protect: true,
       },
     })
     .input(getLoggedInUserInputModel)
     .output(getLoggedInUserOutputModel)
-    .query(async ({ ctx }) => {
-      const userToken = getAuthenticationCookie(ctx);
-      if (!userToken) {
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "User not logged in" });
-      }
-
-      try {
-        const { id, email, fullName, profileImageUrl, role } =
-          await userService.verifyAndDecodeUserToken(userToken);
-        return { id, email, fullName, profileImageUrl, role };
-      } catch {
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired token" });
-      }
-    })
+    // ctx.user is already populated by authenticateProcedure — no second token verification needed.
+    .query(({ ctx }) => {
+      const { id, email, fullName, profileImageUrl, role } = ctx.user;
+      return { id, email, fullName, profileImageUrl, role };
+    }),
 });
 
-function setAuthenticationCookie(ctx: TRPCContext, token: string) {
-  if (ctx && typeof ctx.createCookie === 'function') {
-    ctx.createCookie('auth_token', token);
-  } else {
-    throw new Error("tRPC Context missing 'createCookie' utility.");
-  }
-}
 
 
