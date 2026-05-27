@@ -53,6 +53,7 @@ export const usePublishForm = () => {
     onSuccess: async (_, variables) => {
       await utils.form.getFormForDashboard.invalidate({ formId: variables.formId });
       await utils.form.listForms.invalidate();
+      void utils.form.getPublicForms.invalidate();
     },
   });
   return { publishFormAsync, isPending };
@@ -64,6 +65,7 @@ export const useUnpublishForm = () => {
     onSuccess: async (_, variables) => {
       await utils.form.getFormForDashboard.invalidate({ formId: variables.formId });
       await utils.form.listForms.invalidate();
+      void utils.form.getPublicForms.invalidate();
     },
   });
   return { unpublishFormAsync, isPending };
@@ -85,6 +87,7 @@ export const useDeleteForm = () => {
   const { mutateAsync: deleteFormAsync, isPending } = trpc.form.deleteForm.useMutation({
     onSuccess: async () => {
       await utils.form.listForms.invalidate();
+      void utils.form.getPublicForms.invalidate();
     },
   });
   return { deleteFormAsync, isPending };
@@ -221,6 +224,7 @@ export const useArchiveForm = () => {
   const { mutateAsync: archiveFormAsync, isPending } = trpc.form.archiveForm.useMutation({
     onSuccess: async () => {
       await utils.form.listForms.invalidate();
+      void utils.form.getPublicForms.invalidate();
     },
   });
   return { archiveFormAsync, isPending };
@@ -231,6 +235,7 @@ export const useRestoreForm = () => {
   const { mutateAsync: restoreFormAsync, isPending } = trpc.form.restoreForm.useMutation({
     onSuccess: async () => {
       await utils.form.listForms.invalidate();
+      void utils.form.getPublicForms.invalidate();
     },
   });
   return { restoreFormAsync, isPending };

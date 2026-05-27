@@ -208,8 +208,10 @@ class FormService {
 
     if (!owned) throw new Error("Form not found or access denied");
 
-    await db.delete(formFieldTable).where(eq(formFieldTable.formId, formId));
-    await db.delete(formsTable).where(eq(formsTable.id, formId));
+    await db.transaction(async (tx) => {
+      await tx.delete(formFieldTable).where(eq(formFieldTable.formId, formId));
+      await tx.delete(formsTable).where(eq(formsTable.id, formId));
+    });
     return { success: true, message: "Form deleted successfully" };
   }
 
@@ -344,8 +346,10 @@ class FormService {
 
     if (!exists) throw new Error("Form not found");
 
-    await db.delete(formFieldTable).where(eq(formFieldTable.formId, formId));
-    await db.delete(formsTable).where(eq(formsTable.id, formId));
+    await db.transaction(async (tx) => {
+      await tx.delete(formFieldTable).where(eq(formFieldTable.formId, formId));
+      await tx.delete(formsTable).where(eq(formsTable.id, formId));
+    });
     return { success: true };
   }
 

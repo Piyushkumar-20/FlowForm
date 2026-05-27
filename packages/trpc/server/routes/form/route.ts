@@ -119,7 +119,11 @@ export const formRouter = router({
         return await formService.deleteForm(input, ctx.user.id);
       } catch (err) {
         if (err instanceof TRPCError) throw err;
+        const msg = err instanceof Error ? err.message : "";
         console.error("[deleteForm] error:", err);
+        if (msg.includes("Form not found") || msg.includes("access denied")) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Form not found or you do not have permission to delete it." });
+        }
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to delete form. Please try again." });
       }
     }),
@@ -145,7 +149,16 @@ export const formRouter = router({
     .input(getFormForDashboardInputModel)
     .output(getFormForDashboardOutputModel)
     .query(async ({ input }) => {
-      return formService.getFormForDashboard({ formId: input.formId });
+      try {
+        return await formService.getFormForDashboard({ formId: input.formId });
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("Form not found")) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Form not found." });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to load form." });
+      }
     }),
 
   /* ── PUBLIC FORM ────────────────────────────────────────────────────── */
@@ -155,7 +168,16 @@ export const formRouter = router({
     .input(getFormByIdInputModel)
     .output(getFormByIdOutputModel)
     .query(async ({ input }) => {
-      return formService.getFormById({ formId: input.formId });
+      try {
+        return await formService.getFormById({ formId: input.formId });
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("Form not found")) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Form not found." });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to load form." });
+      }
     }),
 
   /* ── FIELD CRUD ─────────────────────────────────────────────────────── */
@@ -285,6 +307,15 @@ export const formRouter = router({
     .input(getFormBySlugInputModel)
     .output(getFormBySlugOutputModel)
     .query(async ({ input }) => {
-      return formService.getFormBySlug(input.slug);
+      try {
+        return await formService.getFormBySlug(input.slug);
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("Form not found")) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Form not found." });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to load form." });
+      }
     }),
 });

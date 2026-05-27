@@ -30,6 +30,7 @@ export const useAdminArchiveAnyForm = () => {
   const { mutateAsync, isPending } = trpc.admin.archiveAnyForm.useMutation({
     onSuccess: () => {
       void utils.admin.listAllForms.invalidate();
+      void utils.form.listForms.invalidate();
       void utils.form.getPublicForms.invalidate();
     },
   });
@@ -41,6 +42,8 @@ export const useAdminUnarchiveAnyForm = () => {
   const { mutateAsync, isPending } = trpc.admin.unarchiveAnyForm.useMutation({
     onSuccess: () => {
       void utils.admin.listAllForms.invalidate();
+      void utils.form.listForms.invalidate();
+      void utils.form.getPublicForms.invalidate();
     },
   });
   return { unarchiveAnyFormAsync: mutateAsync, isPending };
@@ -52,6 +55,7 @@ export const useAdminDeleteAnyForm = () => {
     onSuccess: () => {
       void utils.admin.listAllForms.invalidate();
       void utils.admin.getAdminStats.invalidate();
+      void utils.form.listForms.invalidate();
       void utils.form.getPublicForms.invalidate();
     },
   });

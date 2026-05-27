@@ -75,9 +75,29 @@ export default function PublicFormPage({ params }: { params: Promise<{ form_id: 
           />
 
           {error ? (
-            <div className="rounded-[10px] border border-rose-500/30 bg-rose-500/[0.06] p-4 text-sm text-rose-300">
-              This form could not be loaded. Please try again.
-            </div>
+            (error as { data?: { code?: string } } | null)?.data?.code === "NOT_FOUND" ? (
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <div
+                  className="grid size-16 place-items-center rounded-full"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl text-white/70" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 600 }}>
+                  Form not found
+                </h2>
+                <p className="max-w-[280px] text-sm leading-[1.6] text-white/40">
+                  This form may have been removed or is no longer available.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-[10px] border border-rose-500/30 bg-rose-500/[0.06] p-4 text-sm text-rose-300">
+                This form could not be loaded. Please try again.
+              </div>
+            )
           ) : isLoading ? (
             <div className="flex flex-col gap-5">
               {[1, 2].map((i) => (
