@@ -11,7 +11,13 @@ const defaultCookieOptions : CookieOptions = {
   path: "/",
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  // "lax" is the correct choice for auth session cookies:
+  //   • Sends cookie on same-site requests (dashboard, API calls) ✓
+  //   • Sends cookie when user navigates from an external link (email, Slack) ✓
+  //   • Does NOT send cookie on cross-site sub-requests (POST, images) → CSRF safe ✓
+  // "strict" was breaking sessions for users arriving from external links because
+  // the auth_token cookie was silently withheld on the very first navigation.
+  sameSite: "lax",
   maxAge: ONE_YEAR,
 };
 
